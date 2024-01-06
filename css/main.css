@@ -1,0 +1,58 @@
+body, html {
+  height: 100%;
+  margin: 0;
+  font-family: Arial, sans-serif;
+}
+
+.header {
+  background-color: #002233;
+  padding: 10px 0;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+}
+
+.nav-items a {
+  color: white;
+  text-decoration: none;
+  margin-left: 20px;
+}
+
+.main-content {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  height: calc(100% - 50px);
+  background: url('background-image.jpg') no-repeat center center fixed;
+  background-size: cover;
+}
+
+.server-info {
+  max-width: 400px;
+  color: white;
+}
+
+.server-info h1 {
+  color: #00aaff;
+}
+
+button {
+  background-color: #00aaff;
+  border: none;
+  padding: 10px 20px;
+  color: white;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+.character-image {
+  /* You would set your image as a background here */
+  width: 300px;
+  height: 500px;
+  background: url('character-image.jpg') no-repeat center center;
+  background-size: contain;
+}
