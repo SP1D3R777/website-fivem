@@ -1,1 +1,8 @@
-<img src="https://image.noelshack.com/fichiers/2024/01/6/1704547745-capture-d-ecran-2024-01-06-142733.jpg">
+# WaveSide Roleplay
+
+Site vitrine + règlement wiki du serveur GTA V RP WaveSide.
+
+Site statique (HTML / CSS / JS + Three.js via CDN), aucune build nécessaire.
+
+## Déploiement Vercel
+Importez le dépôt sur vercel.com → Framework Preset : **Other** → Deploy.

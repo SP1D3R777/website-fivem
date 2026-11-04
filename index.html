@@ -1,33 +1,370 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BrezelRoleplay Server</title>
-    <link rel="stylesheet" href="/css/main.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WaveSide Roleplay — Serveur GTA V RP</title>
+  <meta name="description" content="WaveSide Roleplay : l'expérience roleplay ultime sur GTA V. Économie réaliste, gangs, entreprises, scripts exclusifs. Connectez-vous sur play.waveside.fr" />
+  <meta name="theme-color" content="#06080c" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
 </head>
-<body>
-    <div class="header">
-        <div class="navbar">
-            <div class="logo">B</div>
-            <div class="nav-items">
-                <a href="#">Home</a>
-                <a href="#">Forum</a>
-                <a href="#">Shop</a>
-                <a href="#">Regeln</a>
-                <a href="#">Discord</a>
+<body data-view="accueil" class="is-loading">
+
+  <!-- ===================== Écran de chargement ===================== -->
+  <div class="loader" id="loader" role="status" aria-label="Chargement">
+    <div class="loader__core">
+      <div class="loader__orb">
+        <svg class="loader__ring" viewBox="0 0 120 120" aria-hidden="true">
+          <defs>
+            <linearGradient id="lg" x1="0" x2="1"><stop offset="0" stop-color="#e11d2e"/><stop offset=".6" stop-color="#ff5c6c"/><stop offset="1" stop-color="#fff"/></linearGradient>
+          </defs>
+          <circle cx="60" cy="60" r="54" class="loader__track"/>
+          <circle cx="60" cy="60" r="54" class="loader__arc" stroke="url(#lg)"/>
+        </svg>
+        <!-- Liquide en vagues qui monte avec la progression -->
+        <div class="loader__liquid">
+          <svg viewBox="0 0 200 40" preserveAspectRatio="none" class="loader__wave loader__wave--a"><path d="M0 20 Q25 5 50 20 T100 20 T150 20 T200 20 V40 H0Z"/></svg>
+          <svg viewBox="0 0 200 40" preserveAspectRatio="none" class="loader__wave loader__wave--b"><path d="M0 20 Q25 35 50 20 T100 20 T150 20 T200 20 V40 H0Z"/></svg>
+          <div class="loader__fill"></div>
+        </div>
+        <img class="loader__logo logo-img" src="https://imgg.fr/r/rw8tuwhj.png" alt="" />
+      </div>
+      <div class="loader__brand">WAVESIDE<span>ROLEPLAY</span></div>
+      <div class="loader__bar"><span id="loader-bar"></span></div>
+      <div class="loader__pct"><span id="loader-pct">0</span>%</div>
+    </div>
+  </div>
+
+  <!-- Barre de progression de navigation -->
+  <div class="route-bar" id="route-bar"></div>
+
+  <!-- Fond WebGL (Three.js : braises & embruns) -->
+  <canvas id="fx" aria-hidden="true"></canvas>
+  <div class="grain" aria-hidden="true"></div>
+
+  <!-- ===================== Topbar ===================== -->
+  <header class="topbar" id="topbar">
+    <div class="topbar__inner">
+      <a href="#accueil" class="brand" aria-label="WaveSide Roleplay — Accueil">
+        <span class="logo-ring"><img class="logo-img" src="https://imgg.fr/r/rw8tuwhj.png" alt="Logo WaveSide" width="44" height="44" /></span>
+        <span class="brand__txt"><b>WAVESIDE</b><small>ROLEPLAY</small></span>
+      </a>
+
+      <nav class="nav" id="nav" aria-label="Navigation principale">
+        <a href="#accueil" data-route="accueil" class="nav__link"><i data-icon="home"></i>Accueil</a>
+        <a href="#reglement" data-route="reglement" class="nav__link"><i data-icon="book"></i>Règlement</a>
+        <a href="#connexion" data-route="connexion" class="nav__link"><i data-icon="power"></i>Connexion</a>
+        <a href="https://discord.gg/waveside" target="_blank" rel="noopener" class="nav__link nav__link--discord"><i data-icon="discord"></i>Discord</a>
+      </nav>
+
+      <div class="topbar__actions">
+        <button class="icon-btn" id="sound-toggle" aria-label="Activer / couper les sons" title="Sons de l'interface"><i data-icon="volume"></i></button>
+        <button class="btn btn--primary btn--sm topbar__cta" data-connect><span class="dot-live"></span>Se connecter</button>
+        <button class="burger" id="burger" aria-label="Menu" aria-expanded="false" aria-controls="nav"><span></span><span></span><span></span></button>
+      </div>
+    </div>
+  </header>
+
+  <main id="app">
+
+    <!-- ================================================= ACCUEIL -->
+    <section class="view" data-view="accueil">
+
+      <div class="hero">
+        <div class="hero__bg" aria-hidden="true"><img src="https://imgg.fr/r/uqSCOQYo.png" alt="" /></div>
+        <div class="hero__inner">
+          <span class="pill reveal"><span class="pill__dot"></span>Serveur FiveM • Whitelist ouverte</span>
+          <h1 class="hero__title reveal">
+            <span class="grad">L'EXPÉRIENCE</span>
+            <span class="grad">ROLEPLAY ULTIME</span>
+            <span class="hero__title-sm">SUR GTA V</span>
+          </h1>
+          <p class="hero__sub reveal">
+            Incarnez <span class="typer" id="typer">un officier du LSPD</span><span class="caret"></span>
+            dans un Los Santos vivant, exigeant et façonné par ses joueurs.
+          </p>
+          <div class="hero__actions reveal">
+            <button class="btn btn--primary btn--xl" data-connect><i data-icon="play"></i>SE CONNECTER À PLAY.WAVESIDE.FR</button>
+            <a href="#reglement" class="btn btn--ghost btn--xl"><i data-icon="book"></i>Lire le règlement</a>
+          </div>
+
+          <div class="infobar reveal">
+            <a class="info" href="https://discord.gg/waveside" target="_blank" rel="noopener">
+              <span class="info__ico info__ico--discord"><i data-icon="discord"></i></span>
+              <span><b>+<span data-count="800">0</span></b><small>Membres Discord</small></span>
+            </a>
+            <button class="info" data-copy-ip>
+              <span class="info__ico"><i data-icon="server"></i></span>
+              <span><b>play.waveside.fr</b><small>Cliquez pour copier</small></span>
+              <i data-icon="copy" class="info__end"></i>
+            </button>
+            <div class="info">
+              <span class="info__ico"><i data-icon="clock"></i></span>
+              <span><b>24h/24</b><small>Reboot quotidien</small></span>
             </div>
+          </div>
         </div>
+
+        <svg class="waves" viewBox="0 0 1440 180" preserveAspectRatio="none" aria-hidden="true">
+          <defs><linearGradient id="wg" x1="0" x2="1"><stop offset="0" stop-color="#e11d2e" stop-opacity="0"/><stop offset=".5" stop-color="#ef3340"/><stop offset="1" stop-color="#ff5c6c" stop-opacity="0"/></linearGradient></defs>
+          <path class="wave wave--1" d="M0 100 C 240 40 480 160 720 100 S 1200 40 1440 100 V180 H0Z" />
+          <path class="wave wave--2" d="M0 120 C 260 70 520 180 760 120 S 1220 70 1440 130 V180 H0Z" />
+          <path class="wave-line" d="M0 100 C 240 40 480 160 720 100 S 1200 40 1440 100" stroke="url(#wg)" />
+        </svg>
+      </div>
+
+      <!-- Bandeau défilant -->
+      <div class="marquee" aria-hidden="true">
+        <div class="marquee__track">
+          <span>Économie réaliste</span><i data-icon="wave"></i><span>Gangs & Organisations</span><i data-icon="wave"></i><span>LSPD</span><i data-icon="wave"></i><span>EMS</span><i data-icon="wave"></i><span>Entreprises</span><i data-icon="wave"></i><span>Scripts exclusifs</span><i data-icon="wave"></i><span>Mappings sur-mesure</span><i data-icon="wave"></i>
+          <span>Économie réaliste</span><i data-icon="wave"></i><span>Gangs & Organisations</span><i data-icon="wave"></i><span>LSPD</span><i data-icon="wave"></i><span>EMS</span><i data-icon="wave"></i><span>Entreprises</span><i data-icon="wave"></i><span>Scripts exclusifs</span><i data-icon="wave"></i><span>Mappings sur-mesure</span><i data-icon="wave"></i>
+        </div>
+      </div>
+
+      <!-- Fonctionnalités : grille bento -->
+      <section class="section" id="features">
+        <header class="section__head reveal">
+          <p class="eyebrow">Pourquoi WaveSide</p>
+          <h2 class="h2">Une ville qui vit <span class="grad">par ses joueurs</span></h2>
+          <p class="section__sub">Chaque système a été pensé pour servir le roleplay, pas le farm.</p>
+        </header>
+
+        <div class="bento">
+          <article class="feat feat--xl reveal" data-tilt>
+            <div class="feat__top"><span class="feat__ico"><i data-icon="dollar"></i></span><span class="feat__n">01</span></div>
+            <h3>Économie réaliste</h3>
+            <p>Salaires, impôts, marché dynamique et inflation maîtrisée. Chaque dollar se gagne et se dépense avec cohérence.</p>
+            <ul class="feat__list"><li><i data-icon="check"></i>Marché indexé sur l'activité</li><li><i data-icon="check"></i>Fiscalité & factures réelles</li><li><i data-icon="check"></i>Équilibrage continu</li></ul>
+            <svg class="feat__deco" viewBox="0 0 300 80" preserveAspectRatio="none" aria-hidden="true"><path d="M0 60 L40 52 L80 56 L120 38 L160 44 L200 24 L240 30 L300 8"/></svg>
+          </article>
+          <article class="feat reveal" data-tilt>
+            <div class="feat__top"><span class="feat__ico"><i data-icon="building"></i></span><span class="feat__n">02</span></div>
+            <h3>Entreprises</h3>
+            <p>Créez, recrutez, facturez. Garages, restaurants, concessions : une vraie gestion pour de vraies interactions.</p>
+          </article>
+          <article class="feat reveal" data-tilt>
+            <div class="feat__top"><span class="feat__ico"><i data-icon="users"></i></span><span class="feat__n">03</span></div>
+            <h3>Gangs & Organisations</h3>
+            <p>Progression par paliers, territoires revendiqués, guerres encadrées et braquages scénarisés.</p>
+          </article>
+          <article class="feat reveal" data-tilt>
+            <div class="feat__top"><span class="feat__ico"><i data-icon="code"></i></span><span class="feat__n">04</span></div>
+            <h3>Scripts exclusifs</h3>
+            <p>Tablettes LSPD & EMS, blessures, téléphone, inventaire et HUD développés sur-mesure.</p>
+          </article>
+          <article class="feat reveal" data-tilt>
+            <div class="feat__top"><span class="feat__ico"><i data-icon="map"></i></span><span class="feat__n">05</span></div>
+            <h3>Mappings sur-mesure</h3>
+            <p>Commissariats, hôpital, QG et intérieurs repensés pour des décors immersifs et optimisés.</p>
+          </article>
+          <article class="feat feat--wide reveal" data-tilt>
+            <div class="feat__top"><span class="feat__ico"><i data-icon="lifebuoy"></i></span><span class="feat__n">06</span></div>
+            <div class="feat__row">
+              <div>
+                <h3>Staff à l'écoute</h3>
+                <p>Une modération présente, des tickets traités rapidement et un règlement clair pour un jeu sain et fair-play.</p>
+              </div>
+              <a href="#reglement" class="btn btn--ghost btn--sm">Voir le règlement<i data-icon="arrowRight"></i></a>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- Factions -->
+      <section class="section">
+        <header class="section__head reveal">
+          <p class="eyebrow">Choisissez votre camp</p>
+          <h2 class="h2">Trois voies, <span class="grad">une seule ville</span></h2>
+        </header>
+        <div class="factions">
+          <article class="faction reveal" data-tilt style="--fc:#4f8cff">
+            <span class="faction__ico"><i data-icon="shieldCheck"></i></span>
+            <span class="faction__tag">Légal</span>
+            <h3>LSPD & Gouvernement</h3>
+            <p>Patrouilles, enquêtes, procédures et désescalade. Faites respecter la loi sans jamais perdre de vue la scène.</p>
+            <a href="#reglement-services" class="faction__link">Règles des services publics<i data-icon="arrowRight"></i></a>
+          </article>
+          <article class="faction reveal" data-tilt style="--fc:#ef3340">
+            <span class="faction__ico"><i data-icon="crosshair"></i></span>
+            <span class="faction__tag">Illégal</span>
+            <h3>Monde criminel</h3>
+            <p>Gangs, organisations et MC. Construisez votre empire, négociez, braquez — avec une vraie logique RP.</p>
+            <a href="#reglement-illegal" class="faction__link">Règles de l'illégal<i data-icon="arrowRight"></i></a>
+          </article>
+          <article class="faction reveal" data-tilt style="--fc:#22c55e">
+            <span class="faction__ico"><i data-icon="heart"></i></span>
+            <span class="faction__tag">Secours</span>
+            <h3>EMS & Urgences</h3>
+            <p>Neutres et indispensables. Stabilisez, soignez et sauvez des vies au cœur de chaque conflit.</p>
+            <a href="#reglement-services" class="faction__link">Règles des EMS<i data-icon="arrowRight"></i></a>
+          </article>
+        </div>
+      </section>
+
+      <!-- CTA -->
+      <section class="section section--tight">
+        <div class="cta reveal">
+          <svg class="cta__wave" viewBox="0 0 600 200" preserveAspectRatio="none" aria-hidden="true"><path d="M0 120 C100 60 200 180 300 120 S500 60 600 120"/><path d="M0 150 C100 90 200 210 300 150 S500 90 600 150"/></svg>
+          <div class="cta__txt">
+            <h2 class="h2 h2--sm">Prêt à écrire <span class="grad">votre histoire ?</span></h2>
+            <p>Rejoignez le Discord, lisez le règlement et passez la whitelist.</p>
+          </div>
+          <div class="cta__actions">
+            <a class="btn btn--discord" href="https://discord.gg/waveside" target="_blank" rel="noopener"><i data-icon="discord"></i>Rejoindre le Discord</a>
+            <button class="btn btn--primary" data-connect><i data-icon="play"></i>Se connecter</button>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <!-- ================================================= RÈGLEMENT (WIKI) -->
+    <section class="view" data-view="reglement" hidden>
+      <div class="wiki-head">
+        <div class="wiki-head__inner">
+          <div>
+            <p class="eyebrow">Wiki WaveSide</p>
+            <h1 class="h1">Règlement <span class="grad">officiel</span></h1>
+            <p class="section__sub">La méconnaissance du règlement ne constitue pas une excuse en cas de manquement.</p>
+          </div>
+          <div class="wsearch" id="wsearch">
+            <i data-icon="search" class="wsearch__ico"></i>
+            <input type="search" id="wiki-search" placeholder="Rechercher dans le wiki…" autocomplete="off" aria-label="Rechercher une règle" />
+            <kbd class="wsearch__kbd">/</kbd>
+            <div class="wsearch__results" id="wiki-results" hidden></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="wiki">
+        <aside class="wiki__nav" id="wiki-nav">
+          <button class="wiki__navtoggle" id="wiki-navtoggle" aria-expanded="false"><i data-icon="list"></i><span id="wiki-navlabel">Chapitres</span><i data-icon="chevronDown" class="chev"></i></button>
+          <div class="wiki__tree" id="wiki-tree"></div>
+        </aside>
+
+        <article class="wiki__main">
+          <nav class="crumbs" id="wiki-crumbs" aria-label="Fil d'Ariane"></nav>
+          <div id="wiki-article"></div>
+          <nav class="pager" id="wiki-pager" aria-label="Chapitres précédent et suivant"></nav>
+        </article>
+
+        <aside class="wiki__toc">
+          <p class="toc__title"><i data-icon="list"></i>Sur cette page</p>
+          <ul id="wiki-toc"></ul>
+          <div class="toc__help">
+            <p><b>Une question ?</b> Le staff répond sur le Discord.</p>
+            <a href="https://discord.gg/waveside" target="_blank" rel="noopener" class="btn btn--ghost btn--sm btn--block"><i data-icon="discord"></i>Ouvrir un ticket</a>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ================================================= CONNEXION -->
+    <section class="view" data-view="connexion" hidden>
+      <div class="wiki-head">
+        <div class="wiki-head__inner wiki-head__inner--center">
+          <div>
+            <p class="eyebrow">Rejoindre la ville</p>
+            <h1 class="h1"><span class="grad">Connexion</span></h1>
+            <p class="section__sub">Trois étapes pour entrer dans Los Santos.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="connect">
+        <div class="connect__card" data-tilt>
+          <span class="logo-ring logo-ring--lg"><img class="logo-img" src="https://imgg.fr/r/rw8tuwhj.png" alt="" width="96" height="96" /></span>
+          <h2>play.waveside.fr</h2>
+          <p class="muted">Serveur FiveM • Whitelist</p>
+          <button class="btn btn--primary btn--block btn--xl" data-connect><i data-icon="play"></i>Lancer FiveM & se connecter</button>
+          <div class="f8">
+            <i data-icon="terminal"></i>
+            <code>connect play.waveside.fr</code>
+            <button class="icon-btn icon-btn--sm" data-copy="connect play.waveside.fr" aria-label="Copier la commande F8"><i data-icon="copy"></i></button>
+          </div>
+          <p class="tiny muted">Ouvrez la console FiveM avec <kbd>F8</kbd> et collez la commande.</p>
+          <div class="divider"><span>ou</span></div>
+          <a class="btn btn--discord btn--block" href="https://discord.gg/waveside" target="_blank" rel="noopener"><i data-icon="discord"></i>Continuer avec Discord</a>
+        </div>
+
+        <ol class="steps">
+          <li class="step reveal">
+            <span class="step__ico"><i data-icon="download"></i></span>
+            <div><span class="step__n">Étape 1</span><h3>Installez FiveM</h3><p>Téléchargez le client officiel sur <a href="https://fivem.net" target="_blank" rel="noopener">fivem.net</a> avec une copie légale de GTA V.</p></div>
+          </li>
+          <li class="step reveal">
+            <span class="step__ico"><i data-icon="discord"></i></span>
+            <div><span class="step__n">Étape 2</span><h3>Rejoignez le Discord</h3><p>Liez votre compte, lisez le <a href="#reglement">règlement</a> et passez votre whitelist.</p></div>
+          </li>
+          <li class="step reveal">
+            <span class="step__ico"><i data-icon="play"></i></span>
+            <div><span class="step__n">Étape 3</span><h3>Connectez-vous</h3><p>Cliquez sur « Lancer FiveM » ou tapez <code>connect play.waveside.fr</code> dans la console F8.</p></div>
+          </li>
+        </ol>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===================== Footer ===================== -->
+  <footer class="footer">
+    <svg class="footer__wave" viewBox="0 0 1440 60" preserveAspectRatio="none" aria-hidden="true"><path d="M0 30 C 240 0 480 60 720 30 S 1200 0 1440 30" /></svg>
+    <div class="footer__inner">
+      <div class="footer__brand">
+        <a href="#accueil" class="brand">
+          <span class="logo-ring"><img class="logo-img" src="https://imgg.fr/r/rw8tuwhj.png" alt="" width="44" height="44" /></span>
+          <span class="brand__txt"><b>WAVESIDE</b><small>ROLEPLAY</small></span>
+        </a>
+        <p class="muted">L'expérience roleplay ultime sur GTA V. Serveur communautaire non affilié à Rockstar Games ni à Take-Two Interactive.</p>
+        <div class="socials">
+          <a href="https://discord.gg/waveside" target="_blank" rel="noopener" aria-label="Discord"><i data-icon="discord"></i></a>
+          <a href="#" aria-label="TikTok"><i data-icon="tiktok"></i></a>
+          <a href="#" aria-label="YouTube"><i data-icon="youtube"></i></a>
+          <a href="#" aria-label="Twitch"><i data-icon="twitch"></i></a>
+          <a href="#" aria-label="X / Twitter"><i data-icon="xcom"></i></a>
+        </div>
+      </div>
+      <div class="footer__col">
+        <h4>Navigation</h4>
+        <a href="#accueil">Accueil</a>
+        <a href="#reglement">Règlement</a>
+        <a href="#connexion">Connexion</a>
+        <a href="https://discord.gg/waveside" target="_blank" rel="noopener">Discord</a>
+      </div>
+      <div class="footer__col">
+        <h4>Légal</h4>
+        <a href="#" data-modal="mentions">Mentions légales</a>
+        <a href="#" data-modal="cgu">Conditions d'utilisation</a>
+        <a href="#" data-modal="privacy">Confidentialité</a>
+      </div>
+      <div class="footer__col">
+        <h4>Serveur</h4>
+        <button class="footer__ip" data-copy-ip><i data-icon="server"></i>play.waveside.fr<i data-icon="copy"></i></button>
+        <p class="muted tiny">Ouvert 24h/24 • Reboot quotidien</p>
+      </div>
     </div>
-    <div class="main-content">
-        <div class="server-info">
-            <h1>Nom RP</h1>
-            <p>Serveur Info...</p>
-            <p>Serveur History...</p>
-            <button>Jouer</button>
-        </div>
-        <div class="character-image">
-        </div>
+    <div class="footer__bottom">
+      <span>© <span id="year">2026</span> WaveSide Roleplay. Tous droits réservés.</span>
+      <span>GTA V est une marque de Rockstar Games.</span>
     </div>
+  </footer>
+
+  <!-- Modale -->
+  <div class="modal" id="modal" hidden>
+    <div class="modal__box" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <button class="icon-btn modal__close" data-close aria-label="Fermer"><i data-icon="x"></i></button>
+      <h3 id="modal-title"></h3>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+
+  <script type="importmap">
+    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+  </script>
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>
