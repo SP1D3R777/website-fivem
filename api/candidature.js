@@ -41,25 +41,27 @@ const USER_COOLDOWN_MS = 24 * 3600e3; // 1 candidature / 24 h / compte
 
 const hasBlob = () => !!process.env.BLOB_READ_WRITE_TOKEN;
 
+/* Limite 24 h : un marqueur users/<id>.json dans Vercel Blob (store privé ou public).
+   On ne lit jamais son contenu : la date d'envoi (uploadedAt) suffit. */
 async function lastApplication(uid) {
   if (!hasBlob()) return 0;
   try {
     const { list } = require("@vercel/blob");
     const { blobs } = await list({ prefix: `users/${uid}.json`, limit: 1 });
-    if (!blobs.length) return 0;
-    const r = await fetch(`${blobs[0].url}?t=${Date.now()}`, { cache: "no-store" });
-    return r.ok ? (await r.json()).last || 0 : 0;
-  } catch { return 0; }
+    return blobs.length ? new Date(blobs[0].uploadedAt).getTime() : 0;
+  } catch (e) { console.error("Blob list", e.message); return 0; }
 }
 
 async function markUser(uid, ref) {
   if (!hasBlob()) return;
-  try {
-    const { put } = require("@vercel/blob");
-    await put(`users/${uid}.json`, JSON.stringify({ last: Date.now(), ref }), {
-      access: "public", contentType: "application/json", addRandomSuffix: false, allowOverwrite: true, cacheControlMaxAge: 60,
-    });
-  } catch (e) { console.error("Blob error (limite 24 h ignorée)", e.message); }
+  const { put } = require("@vercel/blob");
+  const body = JSON.stringify({ last: Date.now(), ref });
+  for (const access of ["private", "public"]) {
+    try {
+      await put(`users/${uid}.json`, body, { access, contentType: "application/json", addRandomSuffix: false, allowOverwrite: true });
+      return;
+    } catch (e) { console.error(`Blob put (${access})`, e.message); }
+  }
 }
 
 module.exports = async (req, res) => {
