@@ -57,6 +57,7 @@
       <nav class="nav" id="nav" aria-label="Navigation principale">
         <a href="#accueil" data-route="accueil" class="nav__link"><i data-icon="home"></i>Accueil</a>
         <a href="#reglement" data-route="reglement" class="nav__link"><i data-icon="book"></i>Règlement</a>
+        <a href="#candidature" data-route="candidature" class="nav__link"><i data-icon="fileText"></i>Candidature</a>
         <a href="#connexion" data-route="connexion" class="nav__link"><i data-icon="power"></i>Connexion</a>
         <a href="https://discord.gg/wavesiderp" target="_blank" rel="noopener" class="nav__link nav__link--discord"><i data-icon="discord"></i>Discord</a>
       </nav>
@@ -262,6 +263,138 @@
       </div>
     </section>
 
+
+    <!-- ================================================= CANDIDATURE -->
+    <section class="view" data-view="candidature" hidden>
+      <div class="wiki-head">
+        <div class="wiki-head__inner wiki-head__inner--center">
+          <div>
+            <p class="eyebrow">Session de recrutement</p>
+            <h1 class="h1">Candidature <span class="grad">Staff</span></h1>
+            <p class="section__sub">Rejoignez l'équipe qui fait vivre WaveSide. Comptez une dizaine de minutes.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="apply">
+        <aside class="apply__side">
+          <ol class="stepper" id="stepper">
+            <li class="is-active" data-s="0"><span class="stepper__dot"><i data-icon="idCard"></i></span><div><b>Identité</b><small>Discord, RP, origine</small></div></li>
+            <li data-s="1"><span class="stepper__dot"><i data-icon="user"></i></span><div><b>Profil</b><small>Qualités & présentation</small></div></li>
+            <li data-s="2"><span class="stepper__dot"><i data-icon="sparkles"></i></span><div><b>Motivations</b><small>Pourquoi vous</small></div></li>
+          </ol>
+          <div class="apply__note">
+            <i data-icon="info"></i>
+            <p>Votre brouillon est enregistré automatiquement dans ce navigateur. Réponse du staff sur le Discord.</p>
+          </div>
+        </aside>
+
+        <form class="apply__card" id="apply-form" novalidate>
+          <div class="apply__progress"><span id="apply-bar"></span></div>
+          <!-- Anti-robot : champ invisible -->
+          <input type="text" name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
+
+          <fieldset class="apply__step is-active" data-step="0">
+            <legend><span class="legend__n">01</span>Identité</legend>
+              <div class="field" data-field="discord">
+                <label class="field__label" for="f-discord">Pseudo Discord <span class="req">*</span></label>
+                <p class="field__hint">Celui qu'on utilisera pour vous recontacter.</p>
+                <div class="input"><input id="f-discord" name="discord" type="text" placeholder="ex : spider777" maxlength="40" data-min="2" autocomplete="off" /></div>
+                <div class="field__foot"><span class="field__err" aria-live="polite"></span><span class="field__count"></span></div>
+              </div>
+              <div class="field" data-field="identite">
+                <label class="field__label" for="f-identite">ID Unique + Nom Prénom RP <span class="req">*</span></label>
+                <p class="field__hint">Votre ID en jeu suivi de l'identité de votre personnage.</p>
+                <div class="input"><input id="f-identite" name="identite" type="text" placeholder="ex : 1234 — Marco Rossi" maxlength="80" data-min="3"  /></div>
+                <div class="field__foot"><span class="field__err" aria-live="polite"></span><span class="field__count"></span></div>
+              </div>
+              <div class="field" data-field="age">
+                <label class="field__label" for="f-age">Âge <span class="req">*</span></label>
+                
+                <div class="input input--sm"><input id="f-age" name="age" type="number" inputmode="numeric" min="13" max="99" placeholder="18" /></div>
+                <div class="field__foot"><span class="field__err" aria-live="polite"></span></div>
+              </div>
+              <div class="field" data-field="source">
+                <span class="field__label">Comment avez-vous rejoint le Discord ? <span class="req">*</span></span>
+                <div class="choices" role="radiogroup">
+                  <label class="choice"><input type="radio" name="source" value="Amis" /><span class="choice__box"><span class="choice__ico"><i data-icon="users"></i></span><b>Amis</b><small>Un proche m'a invité</small><i data-icon="check" class="choice__tick"></i></span></label>
+                  <label class="choice"><input type="radio" name="source" value="Top-Serveur" /><span class="choice__box"><span class="choice__ico"><i data-icon="trophy"></i></span><b>Top-Serveur</b><small>Via un classement</small><i data-icon="check" class="choice__tick"></i></span></label>
+                  <label class="choice"><input type="radio" name="source" value="Discord" /><span class="choice__box"><span class="choice__ico choice__ico--discord"><i data-icon="discord"></i></span><b>Discord</b><small>Recherche ou partenariat</small><i data-icon="check" class="choice__tick"></i></span></label>
+                </div>
+                <div class="field__foot"><span class="field__err" aria-live="polite"></span></div>
+              </div>
+          </fieldset>
+          <fieldset class="apply__step" data-step="1">
+            <legend><span class="legend__n">02</span>Profil</legend><div class="grid2">
+              <div class="field" data-field="qualites">
+                <label class="field__label" for="f-qualites">Qualités <span class="req">*</span></label>
+                <p class="field__hint">3 minimum.</p>
+                <div class="input input--area"><textarea id="f-qualites" name="qualites" rows="4" placeholder="Rigoureux, à l'écoute, patient…" maxlength="400" data-min="15"></textarea></div>
+                <div class="field__foot"><span class="field__err" aria-live="polite"></span><span class="field__count"></span></div>
+              </div>
+              <div class="field" data-field="defauts">
+                <label class="field__label" for="f-defauts">Défauts <span class="req">*</span></label>
+                <p class="field__hint">3 minimum.</p>
+                <div class="input input--area"><textarea id="f-defauts" name="defauts" rows="4" placeholder="Têtu, perfectionniste…" maxlength="400" data-min="15"></textarea></div>
+                <div class="field__foot"><span class="field__err" aria-live="polite"></span><span class="field__count"></span></div>
+              </div></div>
+              <div class="field" data-field="presentation">
+                <label class="field__label" for="f-presentation">Présentation IRL <span class="req">*</span></label>
+                <p class="field__hint">Parlez-nous de vous : passions, expérience, disponibilités…</p>
+                <div class="input input--area"><textarea id="f-presentation" name="presentation" rows="6" placeholder="Je m'appelle…" maxlength="1000" data-min="80"></textarea></div>
+                <div class="field__foot"><span class="field__err" aria-live="polite"></span><span class="field__count"></span></div>
+              </div>
+          </fieldset>
+          <fieldset class="apply__step" data-step="2">
+            <legend><span class="legend__n">03</span>Motivations</legend>
+              <div class="field" data-field="motivations">
+                <label class="field__label" for="f-motivations">Vos motivations <span class="req">*</span></label>
+                <p class="field__hint">7 lignes minimum (environ 350 caractères).</p>
+                <div class="input input--area"><textarea id="f-motivations" name="motivations" rows="8" placeholder="Ce qui me motive à rejoindre le staff…" maxlength="1500" data-min="350"></textarea></div>
+                <div class="field__foot"><span class="field__err" aria-live="polite"></span><span class="field__count"></span></div>
+              </div>
+              <div class="field" data-field="pourquoi_waveside">
+                <label class="field__label" for="f-pourquoi_waveside">Pourquoi voulez-vous rejoindre l'équipe WaveSide ? <span class="req">*</span></label>
+                
+                <div class="input input--area"><textarea id="f-pourquoi_waveside" name="pourquoi_waveside" rows="5" placeholder="" maxlength="1000" data-min="60"></textarea></div>
+                <div class="field__foot"><span class="field__err" aria-live="polite"></span><span class="field__count"></span></div>
+              </div>
+              <div class="field" data-field="pourquoi_vous">
+                <label class="field__label" for="f-pourquoi_vous">Pourquoi vous et pas un autre ? <span class="req">*</span></label>
+                
+                <div class="input input--area"><textarea id="f-pourquoi_vous" name="pourquoi_vous" rows="5" placeholder="" maxlength="1000" data-min="60"></textarea></div>
+                <div class="field__foot"><span class="field__err" aria-live="polite"></span><span class="field__count"></span></div>
+              </div>
+              <div class="field" data-field="infos">
+                <label class="field__label" for="f-infos">Information complémentaire <span class="opt">Facultatif</span></label>
+                <p class="field__hint">Tout ce que vous souhaitez ajouter.</p>
+                <div class="input input--area"><textarea id="f-infos" name="infos" rows="3" placeholder="" maxlength="600" data-min="0"></textarea></div>
+                <div class="field__foot"><span class="field__err" aria-live="polite"></span><span class="field__count"></span></div>
+              </div>
+            <label class="consent"><input type="checkbox" name="consent" id="f-consent" /><span class="consent__box"><i data-icon="check"></i></span><span>Je certifie l'exactitude de mes réponses et avoir lu le <a href="#reglement">règlement</a>.</span></label>
+            <div class="field__foot"><span class="field__err" id="consent-err" aria-live="polite"></span></div>
+          </fieldset>
+
+          <div class="apply__nav">
+            <button type="button" class="btn btn--ghost" id="apply-prev" hidden><i data-icon="chevronLeft"></i>Retour</button>
+            <span class="apply__stepinfo" id="apply-stepinfo">Étape 1 / 3</span>
+            <button type="button" class="btn btn--primary" id="apply-next">Continuer<i data-icon="chevronRight"></i></button>
+            <button type="submit" class="btn btn--primary" id="apply-submit" hidden><span class="spin" aria-hidden="true"></span><span class="btn__lbl">Envoyer ma candidature</span><i data-icon="send"></i></button>
+          </div>
+        </form>
+
+        <div class="apply__card apply__done" id="apply-done" hidden>
+          <div class="done__ico"><svg viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24"/><path d="M15 27l7 7 15-15"/></svg></div>
+          <h2>Candidature envoyée</h2>
+          <p>Merci <b id="done-name"></b> ! Votre candidature a bien été transmise au staff. Vous recevrez une réponse sur le Discord.</p>
+          <div class="done__actions">
+            <a href="https://discord.gg/wavesiderp" target="_blank" rel="noopener" class="btn btn--discord"><i data-icon="discord"></i>Rejoindre le Discord</a>
+            <a href="#accueil" class="btn btn--ghost"><i data-icon="home"></i>Retour à l'accueil</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- ================================================= CONNEXION -->
     <section class="view" data-view="connexion" hidden>
       <div class="wiki-head">
@@ -330,6 +463,7 @@
         <h4>Navigation</h4>
         <a href="#accueil">Accueil</a>
         <a href="#reglement">Règlement</a>
+        <a href="#candidature">Candidature</a>
         <a href="#connexion">Connexion</a>
         <a href="https://discord.gg/wavesiderp" target="_blank" rel="noopener">Discord</a>
       </div>

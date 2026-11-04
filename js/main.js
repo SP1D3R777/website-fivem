@@ -4,6 +4,7 @@
    ========================================================================== */
 import { RULES } from "./rules.js";
 import { icon, hydrateIcons } from "./icons.js";
+import { initCandidature } from "./candidature.js";
 
 const CONFIG = {
   ip: "play.waveside.fr",
@@ -13,7 +14,7 @@ const CONFIG = {
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
-const VIEWS = ["accueil", "reglement", "connexion"];
+const VIEWS = ["accueil", "reglement", "candidature", "connexion"];
 const store = {
   get(k) { try { return localStorage.getItem(k); } catch { return null; } },
   set(k, v) { try { localStorage.setItem(k, v); } catch {} },
@@ -82,7 +83,7 @@ const unlockOnce = () => Sound.unlock();
 window.addEventListener("pointerdown", unlockOnce, { passive: true });
 window.addEventListener("keydown", unlockOnce);
 
-const SOUND_SEL = ".btn, .nav__link, .icon-btn, .tree__chap, .tree__subs a, .info, .faction__link, .pager a, .socials a, .footer__ip, .footer__col a, .sres, #wiki-toc a, .brand";
+const SOUND_SEL = ".btn, .nav__link, .icon-btn, .tree__chap, .tree__subs a, .info, .faction__link, .pager a, .socials a, .footer__ip, .footer__col a, .sres, #wiki-toc a, .brand, .choice, .consent";
 let lastHover = 0, hoverEl = null;
 document.addEventListener("pointerover", (e) => {
   if (e.pointerType && e.pointerType !== "mouse") return;
@@ -254,7 +255,7 @@ function route() {
     $$(".view").forEach((v) => (v.hidden = v.dataset.view !== view));
     document.body.dataset.view = view;
     $$(".nav__link[data-route]").forEach((a) => a.classList.toggle("is-active", a.dataset.route === view));
-    document.title = { accueil: "WaveSide Roleplay — Serveur GTA V RP", reglement: "Règlement — WaveSide Roleplay", connexion: "Connexion — WaveSide Roleplay" }[view];
+    document.title = { accueil: "WaveSide Roleplay — Serveur GTA V RP", reglement: "Règlement — WaveSide Roleplay", candidature: "Candidature Staff — WaveSide Roleplay", connexion: "Connexion — WaveSide Roleplay" }[view];
     const rb = $("#route-bar"); rb.classList.remove("is-run"); void rb.offsetWidth; rb.classList.add("is-run");
     if (currentView !== null) Sound.whoosh();
   }
@@ -541,6 +542,7 @@ $("#year").textContent = new Date().getFullYear();
 /* ==========================================================================
    Démarrage
    ========================================================================== */
+initCandidature({ toast, Sound, store });
 route();
 onScroll();
 
