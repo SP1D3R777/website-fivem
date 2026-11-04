@@ -141,31 +141,54 @@ module.exports = async (req, res) => {
      Les réponses complètes sont stockées dans le message Discord lui-même
      (fichier .dat compact, sans aperçu) : aucune base de données requise. */
   const fileName = `fiche-${user.username.replace(/[^a-z0-9_.-]/gi, "_").slice(0, 32)}.dat`;
-  const viaBot = botEnabled();
-  const fd = new FormData();
-  fd.append("payload_json", JSON.stringify({
-    ...(viaBot ? {} : { username: "WaveSide • Candidatures", avatar_url: LOGO }),
-    allowed_mentions: { parse: [] },
-    embeds: [embed(null)],
-    attachments: [{ id: 0, filename: fileName, description: "Données de la fiche candidature" }],
-  }));
-  fd.append("files[0]", new Blob([JSON.stringify(record)], { type: "application/octet-stream" }), fileName);
+  const makeForm = (bot) => {
+    const fd = new FormData();
+    fd.append("payload_json", JSON.stringify({
+      ...(bot ? {} : { username: "WaveSide • Candidatures", avatar_url: LOGO }),
+      allowed_mentions: { parse: [] },
+      embeds: [embed(null)],
+      attachments: [{ id: 0, filename: fileName, description: "Données de la fiche candidature" }],
+    }));
+    fd.append("files[0]", new Blob([JSON.stringify(record)], { type: "application/octet-stream" }), fileName);
+    return fd;
+  };
 
-  let msg;
-  try {
-    if (viaBot) {
-      const r = await botApi(`/channels/${channelId()}/messages`, { method: "POST", form: fd });
-      if (!r.ok) throw new Error(`bot ${r.status}`);
-      msg = r.data;
-    } else {
-      const r = await fetch(`${hook}?wait=true`, { method: "POST", body: fd });
-      if (!r.ok) throw new Error(`webhook ${r.status} ${await r.text()}`);
-      msg = await r.json();
-    }
-  } catch (e) {
-    console.error("Envoi Discord", e.message);
+  // Codes d'erreur Discord les plus fréquents → explication lisible (logs Vercel)
+  const WHY = {
+    10003: "salon introuvable (DISCORD_CHANNEL_ID incorrect)",
+    50001: "le bot n'a pas accès au salon (permission « Voir le salon »)",
+    50013: "permissions manquantes (Envoyer des messages / Intégrer des liens / Joindre des fichiers)",
+    40001: "bot non autorisé (le bot n'est pas sur le serveur ?)",
+    0: "jeton du bot invalide (DISCORD_BOT_TOKEN)",
+  };
+  const errors = [];
+  let msg, viaBot = false;
+
+  // 1a) Bot (avec boutons)
+  if (botEnabled()) {
+    try {
+      const r = await botApi(`/channels/${channelId()}/messages`, { method: "POST", form: makeForm(true) });
+      if (r.ok) { msg = r.data; viaBot = true; }
+      else {
+        const code = r.data?.code ?? (r.status === 401 ? 0 : r.status);
+        errors.push(`bot ${r.status}/${code} : ${WHY[code] || r.data?.message || "erreur"}`);
+      }
+    } catch (e) { errors.push(`bot : ${e.message}`); }
+  }
+
+  // 1b) Repli webhook (sans boutons)
+  if (!msg && hook) {
+    try {
+      const r = await fetch(`${hook}?wait=true`, { method: "POST", body: makeForm(false) });
+      if (r.ok) msg = await r.json();
+      else errors.push(`webhook ${r.status} : ${(await r.text()).slice(0, 200)}`);
+    } catch (e) { errors.push(`webhook : ${e.message}`); }
+  }
+
+  if (errors.length) console.error("Envoi Discord —", errors.join(" | "));
+  if (!msg) {
     recent.delete(ip);
-    return res.status(502).json({ error: "Discord a refusé l'envoi, réessayez plus tard." });
+    return res.status(502).json({ error: `Discord a refusé l'envoi. Détail pour le staff : ${errors.join(" ; ") || "aucun canal configuré"}` });
   }
 
   /* ---------- 2) Lien signé vers la fiche + boutons (mode bot) ---------- */
