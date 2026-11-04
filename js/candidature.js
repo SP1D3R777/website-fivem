@@ -9,7 +9,6 @@ const ENDPOINT = "/api/candidature";
 const DRAFT_KEY = "ws-candidature-draft";
 
 const RULES = {
-  discord: { min: 2, label: "Indiquez votre pseudo Discord." },
   identite: { min: 3, label: "Indiquez votre ID unique et votre nom RP." },
   age: { age: true, label: "Indiquez un âge valide." },
   source: { radio: true, label: "Choisissez une option." },
@@ -21,7 +20,7 @@ const RULES = {
   pourquoi_vous: { min: 60, label: "Développez un peu plus (60 caractères min.)." },
   infos: { min: 0 },
 };
-const STEPS = [["discord", "identite", "age", "source"], ["qualites", "defauts", "presentation"], ["motivations", "pourquoi_waveside", "pourquoi_vous", "infos"]];
+const STEPS = [["identite", "age", "source"], ["qualites", "defauts", "presentation"], ["motivations", "pourquoi_waveside", "pourquoi_vous", "infos"]];
 
 export function initCandidature({ toast, Sound, store }) {
   const form = document.getElementById("apply-form");
@@ -34,7 +33,36 @@ export function initCandidature({ toast, Sound, store }) {
   const info = document.getElementById("apply-stepinfo");
   const bar = document.getElementById("apply-bar");
   const done = document.getElementById("apply-done");
-  let step = 0;
+  const gate = document.getElementById("apply-gate");
+  const checking = document.getElementById("apply-checking");
+  let step = 0, me = null;
+
+  /* --- Connexion Discord obligatoire --- */
+  const AUTH_ERRORS = {
+    denied: "Connexion annulée. Autorisez l'accès à votre compte pour postuler.",
+    state: "La connexion a expiré, réessayez.",
+    token: "Discord n'a pas pu valider la connexion, réessayez.",
+    config: "La connexion Discord n'est pas encore configurée sur le serveur.",
+  };
+  const authErr = new URLSearchParams(location.search).get("auth");
+  if (authErr) {
+    const g = document.getElementById("gate-err");
+    g.textContent = AUTH_ERRORS[authErr] || AUTH_ERRORS.token; g.hidden = false;
+    history.replaceState(null, "", location.pathname + location.hash);
+  }
+  async function loadSession() {
+    try {
+      const r = await fetch("/api/auth/me", { cache: "no-store", credentials: "same-origin" });
+      if (r.status === 503) throw Object.assign(new Error("config"), { code: "config" });
+      if (!r.ok) return null;
+      return await r.json();
+    } catch (e) {
+      const g = document.getElementById("gate-err");
+      g.textContent = e.code === "config" ? AUTH_ERRORS.config : "Service de connexion indisponible pour le moment.";
+      g.hidden = false;
+      return null;
+    }
+  }
 
   const fieldEl = (name) => form.querySelector(`[data-field="${name}"]`);
   const value = (name) => {
@@ -65,21 +93,22 @@ export function initCandidature({ toast, Sound, store }) {
     c.classList.toggle("is-ok", min > 0 && len >= min);
   }
 
-  /* --- Brouillon --- */
+  /* --- Brouillon (un par compte) --- */
+  const draftKey = () => `${DRAFT_KEY}-${me?.user?.id || "anon"}`;
   const saveDraft = () => {
     const data = {};
     Object.keys(RULES).forEach((k) => (data[k] = value(k)));
-    store.set(DRAFT_KEY, JSON.stringify(data));
+    store.set(draftKey(), JSON.stringify(data));
   };
-  try {
-    const d = JSON.parse(store.get(DRAFT_KEY) || "null");
+  const restoreDraft = () => { try {
+    const d = JSON.parse(store.get(draftKey()) || "null");
     if (d) Object.entries(d).forEach(([k, v]) => {
       if (!v) return;
       if (RULES[k]?.radio) { const r = form.querySelector(`input[name="${k}"][value="${v}"]`); if (r) r.checked = true; }
       else if (form.elements[k]) form.elements[k].value = v;
     });
   } catch {}
-  form.querySelectorAll("input[data-min], textarea").forEach(counter);
+  form.querySelectorAll("input[data-min], textarea").forEach(counter); };
 
   let saveT;
   form.addEventListener("input", (e) => {
@@ -133,7 +162,7 @@ export function initCandidature({ toast, Sound, store }) {
     if (!consent.checked) { cerr.textContent = "Merci de cocher cette case."; return; }
     cerr.textContent = "";
 
-    const payload = { website: form.elements.website.value };
+    const payload = { website: form.elements.website.value, formToken: me?.formToken };
     Object.keys(RULES).forEach((k) => (payload[k] = value(k)));
 
     submit.classList.add("is-busy");
@@ -141,10 +170,11 @@ export function initCandidature({ toast, Sound, store }) {
     try {
       const res = await fetch(ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       const data = await res.json().catch(() => ({}));
+      if (res.status === 401) { form.hidden = true; gate.hidden = false; throw new Error(data.error); }
       if (!res.ok) throw new Error(data.error || `Erreur ${res.status}`);
-      store.set(DRAFT_KEY, "");
+      store.set(draftKey(), "");
       Sound.success();
-      document.getElementById("done-name").textContent = payload.discord;
+      document.getElementById("done-name").textContent = me.user.name;
       form.hidden = true; done.hidden = false;
       dots.forEach((d) => { d.classList.remove("is-active"); d.classList.add("is-done"); });
       done.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -157,4 +187,15 @@ export function initCandidature({ toast, Sound, store }) {
   });
 
   show(0);
+
+  loadSession().then((s) => {
+    checking.hidden = true;
+    if (!s) { gate.hidden = false; return; }
+    me = s;
+    document.getElementById("acc-avatar").src = s.user.avatar;
+    document.getElementById("acc-name").textContent = s.user.name;
+    document.getElementById("acc-user").textContent = `@${s.user.username}`;
+    restoreDraft();
+    form.hidden = false;
+  });
 }

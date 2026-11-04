@@ -22,10 +22,11 @@ function fail(msg) {
 }
 
 function render(c) {
+  const u = c.user || { name: c.discord, username: c.discord };
   const date = new Date(c.date);
   const when = date.toLocaleString("fr-FR", { dateStyle: "full", timeStyle: "short" });
   const words = ["presentation", "motivations", "pourquoi_waveside", "pourquoi_vous", "infos"].reduce((n, k) => n + String(c[k] || "").split(/\s+/).filter(Boolean).length, 0);
-  document.title = `${c.discord} — Candidature WaveSide`;
+  document.title = `${u.name} — Candidature WaveSide`;
 
   const block = (ico, title, html, extra = "") => `
     <section class="fsec ${extra}">
@@ -35,10 +36,11 @@ function render(c) {
 
   $("#f-content").innerHTML = `
     <header class="fhead">
-      <div class="fhead__avatar">${esc(c.discord.slice(0, 1).toUpperCase())}</div>
+      ${u.avatar ? `<img class="fhead__avatar fhead__avatar--img" src="${esc(u.avatar)}" alt="" />` : `<div class="fhead__avatar">${esc(String(u.name).slice(0, 1).toUpperCase())}</div>`}
       <div class="fhead__main">
         <p class="eyebrow">Candidature Staff</p>
-        <h1 class="fhead__name">${esc(c.discord)}</h1>
+        <h1 class="fhead__name">${esc(u.name)}</h1>
+        <p class="fhead__user">${icon("discord")}@${esc(u.username)}${u.id ? ` <code>${esc(u.id)}</code>` : ""}</p>
         <p class="fhead__rp">${icon("idCard")}${esc(c.identite)}</p>
       </div>
       <div class="fhead__ref"><small>Référence</small><code>${esc(c.id)}</code></div>
@@ -65,7 +67,7 @@ function render(c) {
 
     <footer class="ffoot">
       <span>WaveSide Roleplay • Document interne au staff — ne pas partager publiquement.</span>
-      <button class="btn btn--ghost btn--sm" id="act-discord" data-copy="${esc(c.discord)}">${icon("discord")}Copier le pseudo</button>
+      <button class="btn btn--ghost btn--sm" id="act-discord" >${icon("discord")}Copier la mention</button>
     </footer>`;
 
   $("#f-loading").hidden = true;
@@ -74,7 +76,7 @@ function render(c) {
 
   const asText = () => [
     `CANDIDATURE STAFF — WAVESIDE`, `Réf. ${c.id} — ${when}`, ``,
-    `Discord : ${c.discord}`, `Identité RP : ${c.identite}`, `Âge : ${c.age}`, `A rejoint via : ${c.source}`, ``,
+    `Discord : @${u.username} (${u.name})${u.id ? ` — ID ${u.id}` : ""}`, `Identité RP : ${c.identite}`, `Âge : ${c.age}`, `A rejoint via : ${c.source}`, ``,
     `Qualités : ${c.qualites}`, `Défauts : ${c.defauts}`, ``, `Présentation IRL :`, c.presentation, ``,
     `Motivations :`, c.motivations, ``, `Pourquoi WaveSide :`, c.pourquoi_waveside, ``, `Pourquoi lui :`, c.pourquoi_vous,
     ...(c.infos ? [``, `Infos complémentaires :`, c.infos] : []),
@@ -86,7 +88,7 @@ function render(c) {
   };
   $("#act-copy").onclick = (e) => copy(asText(), e.currentTarget);
   $("#act-print").onclick = () => window.print();
-  $("#act-discord").onclick = (e) => copy(c.discord, e.currentTarget);
+  $("#act-discord").onclick = (e) => copy(u.id ? `<@${u.id}>` : `@${u.username}`, e.currentTarget);
 }
 
 const id = new URLSearchParams(location.search).get("id") || location.hash.slice(1);

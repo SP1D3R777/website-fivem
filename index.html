@@ -279,28 +279,49 @@
       <div class="apply">
         <aside class="apply__side">
           <ol class="stepper" id="stepper">
-            <li class="is-active" data-s="0"><span class="stepper__dot"><i data-icon="idCard"></i></span><div><b>Identité</b><small>Discord, RP, origine</small></div></li>
+            <li class="is-active" data-s="0"><span class="stepper__dot"><i data-icon="idCard"></i></span><div><b>Identité</b><small>Compte, RP, origine</small></div></li>
             <li data-s="1"><span class="stepper__dot"><i data-icon="user"></i></span><div><b>Profil</b><small>Qualités & présentation</small></div></li>
             <li data-s="2"><span class="stepper__dot"><i data-icon="sparkles"></i></span><div><b>Motivations</b><small>Pourquoi vous</small></div></li>
           </ol>
           <div class="apply__note">
             <i data-icon="info"></i>
-            <p>Votre brouillon est enregistré automatiquement dans ce navigateur. Réponse du staff sur le Discord.</p>
+            <p>Connexion Discord requise. Votre brouillon est enregistré automatiquement dans ce navigateur.</p>
           </div>
         </aside>
 
-        <form class="apply__card" id="apply-form" novalidate>
+        <!-- Connexion Discord obligatoire -->
+        <div class="apply__card apply__gate" id="apply-gate" hidden>
+          <div class="gate__ico"><i data-icon="discord"></i></div>
+          <h2>Connectez-vous avec Discord</h2>
+          <p>Pour postuler, connectez votre compte Discord. Votre pseudo et votre photo de profil sont récupérés automatiquement : le staff pourra vous recontacter directement.</p>
+          <a href="/api/auth/login" class="btn btn--discord btn--xl" id="gate-login"><i data-icon="discord"></i>Se connecter avec Discord</a>
+          <ul class="gate__list">
+            <li><i data-icon="check"></i>Accès à votre pseudo et à votre avatar uniquement</li>
+            <li><i data-icon="check"></i>Aucun accès à vos messages ni à vos serveurs</li>
+            <li><i data-icon="check"></i>Une candidature par compte toutes les 24 h</li>
+          </ul>
+          <p class="gate__err" id="gate-err" hidden></p>
+        </div>
+        <div class="apply__card apply__gate" id="apply-checking">
+          <div class="fspin"><span></span><span></span><span></span></div>
+          <p>Vérification de votre session…</p>
+        </div>
+
+        <form class="apply__card" id="apply-form" novalidate hidden>
           <div class="apply__progress"><span id="apply-bar"></span></div>
           <!-- Anti-robot : champ invisible -->
           <input type="text" name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
 
           <fieldset class="apply__step is-active" data-step="0">
             <legend><span class="legend__n">01</span>Identité</legend>
-              <div class="field" data-field="discord">
-                <label class="field__label" for="f-discord">Pseudo Discord <span class="req">*</span></label>
-                <p class="field__hint">Celui qu'on utilisera pour vous recontacter.</p>
-                <div class="input"><input id="f-discord" name="discord" type="text" placeholder="ex : spider777" maxlength="40" data-min="2" autocomplete="off" /></div>
-                <div class="field__foot"><span class="field__err" aria-live="polite"></span><span class="field__count"></span></div>
+              <div class="account" id="apply-account">
+                <img class="account__avatar" id="acc-avatar" alt="" width="52" height="52" />
+                <div class="account__main">
+                  <small>Connecté avec Discord</small>
+                  <b id="acc-name"></b>
+                  <span id="acc-user"></span>
+                </div>
+                <a href="/api/auth/logout" class="btn btn--ghost btn--sm" id="acc-logout"><i data-icon="power"></i>Se déconnecter</a>
               </div>
               <div class="field" data-field="identite">
                 <label class="field__label" for="f-identite">ID Unique + Nom Prénom RP <span class="req">*</span></label>

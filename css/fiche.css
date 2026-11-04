@@ -72,3 +72,7 @@
   .fhead__avatar { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .chip { background: #f4f4f4 !important; }
 }
+.fhead__avatar--img { object-fit: cover; padding: 0; background: #2b2d31; box-shadow: 0 0 0 3px #5865f2, 0 0 30px -6px rgba(88,101,242,.9); border-radius: 50%; }
+.fhead__user { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; color: #a5adff; font-weight: 600; font-size: .92rem; }
+.fhead__user .ico { width: 16px; height: 16px; }
+.fhead__user code { font-size: .72rem; color: var(--muted); background: rgba(255,255,255,.04); border-color: var(--line-2); box-shadow: none; }

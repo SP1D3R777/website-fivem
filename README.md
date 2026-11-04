@@ -8,16 +8,27 @@ Site statique (HTML / CSS / JS + Three.js via CDN), aucune build nécessaire.
 Importez le dépôt sur vercel.com → Framework Preset : **Other** → Deploy.
 
 ## Candidatures Staff → Discord
-Le formulaire `#candidature` envoie les réponses à `api/candidature.js` (fonction Vercel).
-Discord reçoit **un seul embed** (pseudo, identité RP, âge, origine, aperçu des motivations)
-avec un lien vers la **fiche complète** hébergée sur le site : `/fiche?id=…`.
+Le formulaire `#candidature` exige une **connexion Discord** (pseudo + avatar récupérés
+automatiquement). Les réponses partent vers `api/candidature.js`, puis Discord reçoit
+**un seul embed** avec un lien vers la fiche complète `/fiche?id=…`.
 
-Configuration (Vercel → Projet) :
-1. **Settings → Environment Variables** : `DISCORD_WEBHOOK_URL` = URL du webhook Discord.
-2. **Storage → Create → Blob** puis *Connect* au projet : ajoute `BLOB_READ_WRITE_TOKEN`
-   automatiquement (stockage des fiches).
-3. *(facultatif)* `SITE_URL` = `https://www.waveside.fr` pour forcer le domaine des liens.
-4. **Redeploy**.
+### Sécurité
+- Connexion Discord obligatoire (session signée, cookie HttpOnly, 7 jours).
+- Requêtes acceptées uniquement depuis le site (contrôle d'origine).
+- Formulaire refusé s'il est envoyé moins de 30 s après son ouverture.
+- 1 candidature / 24 h par compte Discord (nécessite Blob) + limite par IP.
+- Champ piège anti-robots, mentions `@everyone` neutralisées, webhook jamais exposé.
 
-Sans Blob configuré, l'embed est envoyé avec un fichier `.txt` des réponses à la place du lien.
-Ne jamais écrire l'URL du webhook dans le code : le dépôt est public.
+### Configuration Vercel (Settings → Environment Variables)
+| Variable | Valeur |
+|---|---|
+| `DISCORD_WEBHOOK_URL` | URL du webhook du salon |
+| `DISCORD_CLIENT_ID` | ID de l'application Discord (OAuth2) |
+| `DISCORD_CLIENT_SECRET` | Secret de l'application Discord |
+| `SITE_URL` | `https://www.waveside.fr` |
+| `BLOB_READ_WRITE_TOKEN` | ajouté automatiquement via **Storage → Blob → Connect** |
+
+Application Discord : https://discord.com/developers/applications → *New Application* →
+**OAuth2** → *Redirects* : `https://www.waveside.fr/api/auth/callback`.
+
+Ne jamais écrire de secret dans le code : le dépôt est public.
