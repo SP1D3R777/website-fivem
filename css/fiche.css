@@ -76,3 +76,15 @@
 .fhead__user { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; color: #a5adff; font-weight: 600; font-size: .92rem; }
 .fhead__user .ico { width: 16px; height: 16px; }
 .fhead__user code { font-size: .72rem; color: var(--muted); background: rgba(255,255,255,.04); border-color: var(--line-2); box-shadow: none; }
+.fdecision { display: flex; gap: 14px; align-items: flex-start; margin-top: 16px; padding: 16px 18px; border-radius: 16px; border: 1px solid; }
+.fdecision__ico { width: 38px; height: 38px; flex-shrink: 0; border-radius: 11px; display: grid; place-items: center; }
+.fdecision__ico .ico { width: 19px; height: 19px; }
+.fdecision b { display: block; font-family: var(--f-title); color: #fff; }
+.fdecision small { color: var(--muted); font-size: .82rem; }
+.fdecision p { margin: 8px 0 0; color: var(--text-2); font-size: .9rem; }
+.fdecision--accepted { border-color: rgba(34,197,94,.4); background: rgba(34,197,94,.07); }
+.fdecision--accepted .fdecision__ico { color: #fff; background: linear-gradient(135deg, #16a34a, #4ade80); }
+.fdecision--refused { border-color: var(--line); background: rgba(225,29,46,.07); }
+.fdecision--refused .fdecision__ico { color: #fff; background: var(--grad-red); }
+.fdecision--pending { border-color: var(--line-3); background: rgba(255,255,255,.02); }
+.fdecision--pending .fdecision__ico { color: var(--warn); background: rgba(245,165,36,.12); }

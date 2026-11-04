@@ -7,9 +7,13 @@ hydrateIcons();
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const para = (s) => (s ? esc(s).split(/\n{2,}/).map((p) => `<p>${p.replace(/\n/g, "<br>")}</p>`).join("") : '<p class="muted">—</p>');
+/* Liste courte (« patient, rigoureux, ponctuel ») → étiquettes ;
+   vraies phrases → paragraphe intact (aucune coupure de phrase). */
 const chips = (s) => {
-  const items = String(s || "").split(/[,;\n•]+/).map((x) => x.trim()).filter((x) => x.length > 1);
-  return items.length >= 2 ? `<div class="chips">${items.map((x) => `<span class="chip">${esc(x)}</span>`).join("")}</div>` : para(s);
+  const txt = String(s || "").trim();
+  const items = txt.split(/\n+|[•;]|,(?=\s)/).map((x) => x.replace(/^[-–\s]+/, "").trim()).filter(Boolean);
+  const isList = items.length >= 2 && items.every((x) => x.length <= 32 && x.split(/\s+/).length <= 4 && !/[.!?]/.test(x.slice(0, -1)));
+  return isList ? `<div class="chips">${items.map((x) => `<span class="chip">${esc(x.replace(/[.!]$/, ""))}</span>`).join("")}</div>` : para(txt);
 };
 const SRC_ICON = { Amis: "users", "Top-Serveur": "trophy", Discord: "discord" };
 
@@ -45,6 +49,20 @@ function render(c) {
       </div>
       <div class="fhead__ref"><small>Référence</small><code>${esc(c.id)}</code></div>
     </header>
+
+    ${c.decision ? `
+    <div class="fdecision fdecision--${c.decision.status}">
+      <span class="fdecision__ico">${icon(c.decision.status === "accepted" ? "check" : "x")}</span>
+      <div>
+        <b>Candidature ${c.decision.status === "accepted" ? "acceptée" : "refusée"}</b>
+        <small>${c.decision.at ? new Date(c.decision.at).toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short" }) : ""}${c.decision.by ? ` • par le staff (ID ${esc(c.decision.by)})` : ""}</small>
+        ${c.decision.reason ? `<p>${esc(c.decision.reason)}</p>` : ""}
+      </div>
+    </div>` : `
+    <div class="fdecision fdecision--pending">
+      <span class="fdecision__ico">${icon("clock")}</span>
+      <div><b>En attente de décision</b><small>Utilisez les boutons Accepter / Refuser sous le message Discord.</small></div>
+    </div>`}
 
     <div class="fstats">
       <div class="fstat"><span>${icon("user")}</span><div><small>Âge</small><b>${esc(c.age)} ans</b></div></div>

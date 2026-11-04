@@ -19,6 +19,7 @@
    ========================================================================== */
 const crypto = require("crypto");
 const { verify, currentUser, originOk, ficheRef } = require("../lib/session");
+const { botEnabled, channelId, botApi, components } = require("../lib/discord");
 
 const LIMITS = {
   identite: [3, 80], age: [1, 2], source: [1, 20],
@@ -68,7 +69,7 @@ module.exports = async (req, res) => {
   if (req.method !== "POST") return res.status(405).json({ error: "Méthode non autorisée." });
 
   const hook = process.env.DISCORD_WEBHOOK_URL;
-  if (!hook) return res.status(500).json({ error: "Le serveur n'est pas configuré (webhook manquant)." });
+  if (!hook && !botEnabled()) return res.status(500).json({ error: "Le serveur n'est pas configuré (Discord manquant)." });
 
   // 1) Requête envoyée depuis notre propre site uniquement
   if (!originOk(req)) return res.status(403).json({ error: "Requête refusée." });
@@ -140,37 +141,49 @@ module.exports = async (req, res) => {
      Les réponses complètes sont stockées dans le message Discord lui-même
      (fichier .dat compact, sans aperçu) : aucune base de données requise. */
   const fileName = `fiche-${user.username.replace(/[^a-z0-9_.-]/gi, "_").slice(0, 32)}.dat`;
+  const viaBot = botEnabled();
   const fd = new FormData();
   fd.append("payload_json", JSON.stringify({
-    username: "WaveSide • Candidatures", avatar_url: LOGO, allowed_mentions: { parse: [] },
-    embeds: [embed(null)], attachments: [{ id: 0, filename: fileName, description: "Données de la fiche candidature" }],
+    ...(viaBot ? {} : { username: "WaveSide • Candidatures", avatar_url: LOGO }),
+    allowed_mentions: { parse: [] },
+    embeds: [embed(null)],
+    attachments: [{ id: 0, filename: fileName, description: "Données de la fiche candidature" }],
   }));
   fd.append("files[0]", new Blob([JSON.stringify(record)], { type: "application/octet-stream" }), fileName);
 
   let msg;
   try {
-    const r = await fetch(`${hook}?wait=true`, { method: "POST", body: fd });
-    if (!r.ok) {
-      console.error("Discord webhook error", r.status, await r.text());
-      recent.delete(ip);
-      return res.status(502).json({ error: "Discord a refusé l'envoi, réessayez plus tard." });
+    if (viaBot) {
+      const r = await botApi(`/channels/${channelId()}/messages`, { method: "POST", form: fd });
+      if (!r.ok) throw new Error(`bot ${r.status}`);
+      msg = r.data;
+    } else {
+      const r = await fetch(`${hook}?wait=true`, { method: "POST", body: fd });
+      if (!r.ok) throw new Error(`webhook ${r.status} ${await r.text()}`);
+      msg = await r.json();
     }
-    msg = await r.json();
   } catch (e) {
-    console.error(e);
+    console.error("Envoi Discord", e.message);
     recent.delete(ip);
-    return res.status(502).json({ error: "Impossible de joindre Discord." });
+    return res.status(502).json({ error: "Discord a refusé l'envoi, réessayez plus tard." });
   }
 
-  /* ---------- 2) Ajout du lien signé vers la fiche HTML ---------- */
+  /* ---------- 2) Lien signé vers la fiche + boutons (mode bot) ---------- */
   const ref = ficheRef(msg.id);
   const ficheUrl = `${site}/fiche?id=${ref}`;
+  const keep = (msg.attachments || []).map((a) => ({ id: a.id })); // conserve la pièce jointe
+  const edit = {
+    embeds: [embed(ficheUrl, msg.id)],
+    attachments: keep,
+    allowed_mentions: { parse: [] },
+    ...(viaBot ? { components: components({ ficheUrl }) } : {}),
+  };
   try {
-    const r = await fetch(`${hook}/messages/${msg.id}`, {
-      method: "PATCH", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ embeds: [embed(ficheUrl, msg.id)], allowed_mentions: { parse: [] } }),
-    });
-    if (!r.ok) console.error("Discord edit error", r.status, await r.text());
+    if (viaBot) await botApi(`/channels/${channelId()}/messages/${msg.id}`, { method: "PATCH", json: edit });
+    else {
+      const r = await fetch(`${hook}/messages/${msg.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(edit) });
+      if (!r.ok) console.error("Discord edit error", r.status, await r.text());
+    }
   } catch (e) { console.error(e); }
 
   await markUser(user.id, msg.id);
