@@ -27,6 +27,14 @@ Le bot poste chaque candidature avec 3 boutons : **Accepter**, **Refuser** (fen�
 accepté → invitation à ouvrir un ticket ; refusé → retour du staff + possibilité de repostuler.
 Le message du salon passe en vert / gris avec le nom du staff et la date.
 
+### Décision depuis la fiche (sans héberger de bot)
+Sur `/fiche?id=…`, un membre du staff connecté avec Discord voit les boutons
+**Accepter / Refuser** (avec message au candidat). Le message Discord est mis à jour
+(couleur + décision) et, si `DISCORD_BOT_TOKEN` est défini, le candidat reçoit un MP.
+Le staff est reconnu via `DISCORD_STAFF_IDS` (IDs Discord séparés par `,`) ou via
+`DISCORD_GUILD_ID` + `DISCORD_STAFF_ROLE_ID` (nécessite le bot sur le serveur).
+Le bot n'a **jamais** besoin d'être hébergé : le site utilise son jeton à la demande.
+
 ### Configuration Vercel (Settings → Environment Variables)
 | Variable | Valeur |
 |---|---|
@@ -35,6 +43,8 @@ Le message du salon passe en vert / gris avec le nom du staff et la date.
 | `DISCORD_BOT_TOKEN` | Onglet **Bot** → *Reset Token* |
 | `DISCORD_PUBLIC_KEY` | **General Information** → *Public Key* |
 | `DISCORD_CHANNEL_ID` | ID du salon des candidatures (clic droit → Copier l'identifiant) |
+| `DISCORD_STAFF_IDS` | IDs Discord des membres du staff autorisés à décider, séparés par `,` |
+| `DISCORD_GUILD_ID` | *(facultatif)* ID du serveur Discord (avec le rôle staff ci-dessous) |
 | `DISCORD_STAFF_ROLE_ID` | *(facultatif)* rôle(s) autorisé(s) à décider, séparés par `,` |
 | `DISCORD_TICKET_URL` | *(facultatif)* lien du salon ticket (sinon l'invitation Discord) |
 | `SITE_URL` | `https://www.waveside.fr` |

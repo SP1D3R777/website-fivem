@@ -6,7 +6,8 @@
    (pièce jointe .dat). On relit ce message via le webhook lui-même, puis le
    fichier joint. La signature empêche d'ouvrir une fiche sans le vrai lien.
    ========================================================================== */
-const { checkFicheRef } = require("../lib/session");
+const { checkFicheRef, currentUser } = require("../lib/session");
+const { isStaff } = require("../lib/decision");
 const { botEnabled, channelId, botApi, readDecision } = require("../lib/discord");
 
 module.exports = async (req, res) => {
@@ -42,6 +43,10 @@ module.exports = async (req, res) => {
     const data = JSON.parse(await f.text());
     data.id = messageId;
     data.decision = readDecision(msg.embeds?.[0]);
+    // Qui consulte la fiche ? (pour afficher les boutons de décision au staff)
+    let viewer = null;
+    try { viewer = currentUser(req); } catch {}
+    data.viewer = viewer ? { name: viewer.name, avatar: viewer.avatar, staff: await isStaff(viewer) } : null;
     return res.status(200).json(data);
   } catch (e) {
     console.error(e);

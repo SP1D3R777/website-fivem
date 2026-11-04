@@ -25,6 +25,70 @@ function fail(msg) {
   if (msg) $("#f-error-msg").textContent = msg;
 }
 
+/* Bloc « en attente » : boutons de décision pour le staff connecté */
+function pendingBlock(c) {
+  const v = c.viewer;
+  if (v && v.staff) return `
+    <section class="fdecide" id="fdecide">
+      <div class="fdecide__head">
+        <img src="${esc(v.avatar)}" alt="" />
+        <div><b>Décision du staff</b><small>Connecté en tant que ${esc(v.name)}</small></div>
+        <span class="fdecide__badge">${icon("clock")}En attente</span>
+      </div>
+      <label class="fdecide__label" for="fd-reason">Message au candidat <span>(facultatif, conseillé en cas de refus)</span></label>
+      <textarea id="fd-reason" maxlength="700" rows="3" placeholder="Ex : réponses trop courtes, n'hésitez pas à développer vos motivations…"></textarea>
+      <div class="fdecide__actions">
+        <button class="btn fbtn fbtn--ok" data-decide="accepted"><span class="spin"></span>${icon("check")}<span class="lbl">Accepter</span></button>
+        <button class="btn fbtn fbtn--ko" data-decide="refused"><span class="spin"></span>${icon("x")}<span class="lbl">Refuser</span></button>
+      </div>
+      <p class="fdecide__msg" id="fd-msg" hidden></p>
+    </section>`;
+  const login = `/api/auth/login?next=${encodeURIComponent(location.pathname + location.search)}`;
+  return `
+    <div class="fdecision fdecision--pending">
+      <span class="fdecision__ico">${icon("clock")}</span>
+      <div><b>En attente de décision</b>
+        <small>${v ? "Seuls les membres du staff peuvent accepter ou refuser cette candidature." : `Membre du staff ? <a href="${login}">Connectez-vous avec Discord</a> pour accepter ou refuser.`}</small>
+      </div>
+    </div>`;
+}
+
+function bindDecision(c) {
+  const box = document.getElementById("fdecide");
+  if (!box) return;
+  const msg = document.getElementById("fd-msg");
+  box.querySelectorAll("[data-decide]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const status = btn.dataset.decide;
+      // Double clic de confirmation
+      if (!btn.classList.contains("is-confirm")) {
+        box.querySelectorAll("[data-decide]").forEach((b) => { b.classList.remove("is-confirm"); b.querySelector(".lbl").textContent = b.dataset.decide === "accepted" ? "Accepter" : "Refuser"; });
+        btn.classList.add("is-confirm");
+        btn.querySelector(".lbl").textContent = status === "accepted" ? "Confirmer l'acceptation" : "Confirmer le refus";
+        return;
+      }
+      box.querySelectorAll("[data-decide]").forEach((b) => (b.disabled = true));
+      btn.classList.add("is-busy");
+      msg.hidden = true;
+      try {
+        const r = await fetch("/api/decision", {
+          method: "POST", headers: { "Content-Type": "application/json" }, credentials: "same-origin",
+          body: JSON.stringify({ id: c.ref, status, reason: document.getElementById("fd-reason").value }),
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(j.error || `Erreur ${r.status}`);
+        c.decision = { ...(j.decision || { status }), at: Date.now() };
+        c.dmNote = j.dmOk ? "Message privé envoyé au candidat." : "Le message privé n'a pas pu être envoyé : prévenez le candidat manuellement.";
+        render(c);
+      } catch (e) {
+        msg.textContent = e.message; msg.hidden = false;
+        box.querySelectorAll("[data-decide]").forEach((b) => (b.disabled = false));
+        btn.classList.remove("is-busy");
+      }
+    });
+  });
+}
+
 function render(c) {
   const u = c.user || { name: c.discord, username: c.discord };
   const date = new Date(c.date);
@@ -57,12 +121,9 @@ function render(c) {
         <b>Candidature ${c.decision.status === "accepted" ? "acceptée" : "refusée"}</b>
         <small>${c.decision.at ? new Date(c.decision.at).toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short" }) : ""}${c.decision.by ? ` • par le staff (ID ${esc(c.decision.by)})` : ""}</small>
         ${c.decision.reason ? `<p>${esc(c.decision.reason)}</p>` : ""}
+        ${c.dmNote ? `<p class="fdecision__note">${esc(c.dmNote)}</p>` : ""}
       </div>
-    </div>` : `
-    <div class="fdecision fdecision--pending">
-      <span class="fdecision__ico">${icon("clock")}</span>
-      <div><b>En attente de décision</b><small>Utilisez les boutons Accepter / Refuser sous le message Discord.</small></div>
-    </div>`}
+    </div>` : pendingBlock(c)}
 
     <div class="fstats">
       <div class="fstat"><span>${icon("user")}</span><div><small>Âge</small><b>${esc(c.age)} ans</b></div></div>
@@ -106,6 +167,7 @@ function render(c) {
   };
   $("#act-copy").onclick = (e) => copy(asText(), e.currentTarget);
   $("#act-print").onclick = () => window.print();
+  bindDecision(c);
   $("#act-discord").onclick = (e) => copy(u.id ? `<@${u.id}>` : `@${u.username}`, e.currentTarget);
 }
 
@@ -114,6 +176,6 @@ if (!/^\d{17,20}\.[A-Za-z0-9_-]{22}$/.test(id || "")) fail("Ce lien de fiche est
 else {
   fetch(`/api/fiche?id=${encodeURIComponent(id)}`, { cache: "no-store" })
     .then(async (r) => { const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error); return j; })
-    .then(render)
+    .then((c) => { c.ref = id; render(c); })
     .catch((e) => fail(e.message || "Impossible de charger la candidature."));
 }

@@ -1,6 +1,7 @@
 /* GET /api/auth/login → redirection vers l'autorisation Discord (scope identify) */
 const crypto = require("crypto");
 const { cookie, siteUrl, STATE_COOKIE } = require("../../lib/session");
+const NEXT_COOKIE = "ws_oauth_next";
 
 module.exports = (req, res) => {
   const id = process.env.DISCORD_CLIENT_ID;
@@ -18,7 +19,9 @@ module.exports = (req, res) => {
     state,
     prompt: "none",
   });
-  res.setHeader("Set-Cookie", cookie(STATE_COOKIE, state, 600));
+  const next = String(req.query?.next || "");
+  const safeNext = /^\/(?!\/)[\w\-./?=&#%]*$/.test(next) ? next : "";
+  res.setHeader("Set-Cookie", [cookie(STATE_COOKIE, state, 600), cookie(NEXT_COOKIE, safeNext, 600)]);
   res.statusCode = 302;
   res.setHeader("Location", `https://discord.com/oauth2/authorize?${params}`);
   res.end();
