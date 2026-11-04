@@ -8,7 +8,7 @@ import { icon, hydrateIcons } from "./icons.js";
 const CONFIG = {
   ip: "play.waveside.fr",
   fivemUrl: "fivem://connect/play.waveside.fr",
-  discord: "https://discord.gg/waveside",
+  discord: "https://discord.gg/wavesiderp",
 };
 
 const $ = (s, r = document) => r.querySelector(s);
