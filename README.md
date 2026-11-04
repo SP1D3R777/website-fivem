@@ -8,12 +8,16 @@ Site statique (HTML / CSS / JS + Three.js via CDN), aucune build nécessaire.
 Importez le dépôt sur vercel.com → Framework Preset : **Other** → Deploy.
 
 ## Candidatures Staff → Discord
-Le formulaire `#candidature` envoie les réponses à la fonction Vercel `api/candidature.js`,
-qui les relaie dans un salon Discord via un webhook.
+Le formulaire `#candidature` envoie les réponses à `api/candidature.js` (fonction Vercel).
+Discord reçoit **un seul embed** (pseudo, identité RP, âge, origine, aperçu des motivations)
+avec un lien vers la **fiche complète** hébergée sur le site : `/fiche?id=…`.
 
-Configuration (une seule fois) : Vercel → Projet → **Settings → Environment Variables**
-- Nom : `DISCORD_WEBHOOK_URL`
-- Valeur : l'URL du webhook Discord
-- Environnements : Production (+ Preview si besoin), puis **Redeploy**.
+Configuration (Vercel → Projet) :
+1. **Settings → Environment Variables** : `DISCORD_WEBHOOK_URL` = URL du webhook Discord.
+2. **Storage → Create → Blob** puis *Connect* au projet : ajoute `BLOB_READ_WRITE_TOKEN`
+   automatiquement (stockage des fiches).
+3. *(facultatif)* `SITE_URL` = `https://www.waveside.fr` pour forcer le domaine des liens.
+4. **Redeploy**.
 
+Sans Blob configuré, l'embed est envoyé avec un fichier `.txt` des réponses à la place du lien.
 Ne jamais écrire l'URL du webhook dans le code : le dépôt est public.

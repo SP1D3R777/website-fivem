@@ -1,10 +1,19 @@
 /* ==========================================================================
-   WAVESIDE — Fonction Vercel : relais des candidatures vers Discord
+   WAVESIDE — Fonction Vercel : réception des candidatures
    POST /api/candidature  (JSON)
-   L'URL du webhook est lue dans la variable d'environnement
-   DISCORD_WEBHOOK_URL (Vercel → Settings → Environment Variables).
-   Ne JAMAIS l'écrire en clair dans ce dépôt.
+
+   1. Valide et nettoie les réponses.
+   2. Enregistre la candidature dans Vercel Blob (si BLOB_READ_WRITE_TOKEN
+      est configuré) → fiche consultable sur /fiche?id=…
+   3. Envoie UN embed propre dans le salon Discord avec le lien de la fiche.
+      Sans Blob : l'embed est accompagné du fichier .txt complet.
+
+   Variables d'environnement (Vercel → Settings → Environment Variables) :
+   - DISCORD_WEBHOOK_URL   (obligatoire)
+   - BLOB_READ_WRITE_TOKEN (ajoutée automatiquement en créant un store Blob)
+   - SITE_URL              (facultatif, ex : https://waveside.fr)
    ========================================================================== */
+const crypto = require("crypto");
 
 const LIMITS = {
   discord: [2, 40], identite: [3, 80], age: [1, 2], source: [1, 20],
@@ -13,15 +22,28 @@ const LIMITS = {
 };
 const SOURCES = ["Amis", "Top-Serveur", "Discord"];
 const RED = 0xe11d2e;
+const LOGO = "https://imgg.fr/r/rw8tuwhj.png";
 
-// Anti-spam simple (par instance) : 1 candidature / 2 min / IP
-const recent = new Map();
+const recent = new Map(); // anti-spam : 1 envoi / 2 min / IP (par instance)
 
 const clean = (v) => String(v ?? "").replace(/\r/g, "").trim();
-// Empêche les mentions @everyone / @here / <@id> et la casse du markdown de bloc
-const safe = (v) => clean(v).replace(/@(everyone|here)/gi, "@​$1").replace(/<@[!&]?\d+>/g, "[mention]").replace(/```/g, "ʼʼʼ");
-const cut = (v, n) => (v.length > n ? v.slice(0, n - 1) + "…" : v);
-const block = (v, n = 1000) => (v ? cut(v, n) : "—");
+const safe = (v) => clean(v).replace(/@(everyone|here)/gi, "@​$1").replace(/<@[!&]?\d+>/g, "[mention]");
+const cut = (v, n) => (v.length > n ? v.slice(0, n - 1).trimEnd() + "…" : v);
+const oneLine = (v) => v.replace(/\s+/g, " ");
+
+async function saveToBlob(record) {
+  if (!process.env.BLOB_READ_WRITE_TOKEN) return null;
+  try {
+    const { put } = require("@vercel/blob");
+    await put(`candidatures/${record.id}.json`, JSON.stringify(record), {
+      access: "public", contentType: "application/json", addRandomSuffix: false,
+    });
+    return true;
+  } catch (e) {
+    console.error("Blob error", e);
+    return null;
+  }
+}
 
 module.exports = async (req, res) => {
   if (req.method !== "POST") return res.status(405).json({ error: "Méthode non autorisée." });
@@ -32,9 +54,7 @@ module.exports = async (req, res) => {
   let body = req.body;
   if (typeof body === "string") { try { body = JSON.parse(body); } catch { body = {}; } }
   body = body || {};
-
-  // Pot de miel : les robots remplissent ce champ invisible
-  if (clean(body.website)) return res.status(200).json({ ok: true });
+  if (clean(body.website)) return res.status(200).json({ ok: true }); // pot de miel anti-robots
 
   const d = {};
   for (const [k, [min, max]] of Object.entries(LIMITS)) {
@@ -51,75 +71,62 @@ module.exports = async (req, res) => {
   if (recent.has(ip) && now - recent.get(ip) < 120000) return res.status(429).json({ error: "Patientez 2 minutes avant un nouvel envoi." });
   recent.set(ip, now);
 
-  const stamp = new Date().toISOString();
-  const footer = { text: "WaveSide Roleplay • Candidatures Staff" };
+  const id = crypto.randomBytes(12).toString("base64url"); // 16 caractères, impossible à deviner
+  const date = new Date().toISOString();
+  const record = { id, date, ...d, age };
 
-  const embeds = [
-    {
-      color: RED,
-      title: "Nouvelle candidature Staff",
-      description: `**${cut(d.discord, 40)}** a déposé une candidature.`,
-      fields: [
-        { name: "Pseudo Discord", value: `\`${cut(d.discord, 40)}\``, inline: true },
-        { name: "Identité RP", value: cut(d.identite, 80), inline: true },
-        { name: "Âge", value: `${age} ans`, inline: true },
-        { name: "A rejoint via", value: d.source, inline: true },
-      ],
-      timestamp: stamp,
-    },
-    {
-      color: RED,
-      title: "Profil",
-      fields: [
-        { name: "Qualités", value: block(d.qualites, 400), inline: true },
-        { name: "Défauts", value: block(d.defauts, 400), inline: true },
-        { name: "Présentation IRL", value: block(d.presentation, 1000) },
-      ],
-    },
-    { color: RED, title: "Motivations", description: block(d.motivations, 1500) },
-    {
-      color: RED,
-      title: "Pourquoi WaveSide / Pourquoi lui",
-      fields: [
-        { name: "Pourquoi rejoindre l'équipe WaveSide ?", value: block(d.pourquoi_waveside, 1000) },
-        { name: "Pourquoi vous et pas un autre ?", value: block(d.pourquoi_vous, 1000) },
-      ],
-      ...(d.infos ? {} : { footer, timestamp: stamp }),
-    },
-  ];
-  if (d.infos) embeds.push({ color: RED, title: "Informations complémentaires", description: block(d.infos, 600), footer, timestamp: stamp });
+  const stored = await saveToBlob(record);
+  const site = (process.env.SITE_URL || `https://${req.headers["x-forwarded-host"] || req.headers.host}`).replace(/\/$/, "");
+  const ficheUrl = stored ? `${site}/fiche?id=${id}` : null;
 
-  // Discord limite un message à 6000 caractères au total : on réduit si besoin
-  const size = () => JSON.stringify(embeds).length;
-  if (size() > 5800) {
-    embeds[2].description = cut(embeds[2].description, 900);
-    embeds[3].fields.forEach((f) => (f.value = cut(f.value, 600)));
+  /* ---------- Embed unique ---------- */
+  const embed = {
+    color: RED,
+    author: { name: "WaveSide Roleplay • Recrutement Staff", icon_url: LOGO },
+    title: `Candidature — ${cut(d.discord, 40)}`,
+    ...(ficheUrl ? { url: ficheUrl } : {}),
+    description: [
+      `**${cut(oneLine(d.identite), 80)}**`,
+      `> ${cut(oneLine(d.motivations), 180)}`,
+      "",
+      ficheUrl ? `### [Ouvrir la fiche complète ↗](${ficheUrl})` : "Réponses complètes dans le fichier joint.",
+    ].join("\n"),
+    fields: [
+      { name: "Discord", value: `\`${cut(d.discord, 40)}\``, inline: true },
+      { name: "Âge", value: `${age} ans`, inline: true },
+      { name: "A rejoint via", value: d.source, inline: true },
+    ],
+    thumbnail: { url: LOGO },
+    footer: { text: `Réf. ${id}` },
+    timestamp: date,
+  };
+
+  const payload = { username: "WaveSide • Candidatures", avatar_url: LOGO, allowed_mentions: { parse: [] }, embeds: [embed] };
+
+  let fetchOpts;
+  if (ficheUrl) {
+    fetchOpts = { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) };
+  } else {
+    // Repli sans stockage : fichier texte complet joint
+    const txt = [
+      `CANDIDATURE STAFF — WAVESIDE ROLEPLAY`, `Référence : ${id}`, `Date : ${date}`, ``,
+      `Pseudo Discord : ${d.discord}`, `Identité RP : ${d.identite}`, `Âge : ${age}`, `A rejoint via : ${d.source}`, ``,
+      `— Qualités —`, d.qualites, ``, `— Défauts —`, d.defauts, ``, `— Présentation IRL —`, d.presentation, ``,
+      `— Motivations —`, d.motivations, ``, `— Pourquoi rejoindre l'équipe WaveSide ? —`, d.pourquoi_waveside, ``,
+      `— Pourquoi vous et pas un autre ? —`, d.pourquoi_vous, ``, `— Informations complémentaires —`, d.infos || "—",
+    ].join("\n");
+    const fileName = `candidature-${d.discord.replace(/[^a-z0-9_.-]/gi, "_").slice(0, 32)}.txt`;
+    payload.attachments = [{ id: 0, filename: fileName }];
+    const fd = new FormData();
+    fd.append("payload_json", JSON.stringify(payload));
+    fd.append("files[0]", new Blob([txt], { type: "text/plain;charset=utf-8" }), fileName);
+    fetchOpts = { method: "POST", body: fd };
   }
 
-  // Version texte complète jointe en fichier, pour archivage
-  const txt = [
-    `CANDIDATURE STAFF — WAVESIDE ROLEPLAY`, `Date : ${stamp}`, ``,
-    `Pseudo Discord : ${d.discord}`, `Identité RP : ${d.identite}`, `Âge : ${age}`, `A rejoint via : ${d.source}`, ``,
-    `— Qualités —`, d.qualites, ``, `— Défauts —`, d.defauts, ``, `— Présentation IRL —`, d.presentation, ``,
-    `— Motivations —`, d.motivations, ``, `— Pourquoi rejoindre l'équipe WaveSide ? —`, d.pourquoi_waveside, ``,
-    `— Pourquoi vous et pas un autre ? —`, d.pourquoi_vous, ``, `— Informations complémentaires —`, d.infos || "—",
-  ].join("\n");
-
-  const fileName = `candidature-${d.discord.replace(/[^a-z0-9_.-]/gi, "_").slice(0, 32)}.txt`;
-  const fd = new FormData();
-  fd.append("payload_json", JSON.stringify({
-    username: "WaveSide • Candidatures",
-    allowed_mentions: { parse: [] },
-    embeds,
-    attachments: [{ id: 0, filename: fileName }],
-  }));
-  fd.append("files[0]", new Blob([txt], { type: "text/plain;charset=utf-8" }), fileName);
-
   try {
-    const r = await fetch(hook, { method: "POST", body: fd });
+    const r = await fetch(hook, fetchOpts);
     if (!r.ok) {
-      const t = await r.text();
-      console.error("Discord webhook error", r.status, t);
+      console.error("Discord webhook error", r.status, await r.text());
       recent.delete(ip);
       return res.status(502).json({ error: "Discord a refusé l'envoi, réessayez plus tard." });
     }

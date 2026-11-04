@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Fiche candidature — WaveSide Roleplay</title>
+  <meta name="theme-color" content="#06080c" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/fiche.css" />
+</head>
+<body class="fiche-page">
+  <div class="grain" aria-hidden="true"></div>
+
+  <header class="fbar">
+    <a href="/" class="brand">
+      <span class="logo-ring"><img class="logo-img" src="https://imgg.fr/r/rw8tuwhj.png" alt="" width="44" height="44" /></span>
+      <span class="brand__txt"><b>WAVESIDE</b><small>RECRUTEMENT</small></span>
+    </a>
+    <div class="fbar__actions" id="fbar-actions" hidden>
+      <button class="btn btn--ghost btn--sm" id="act-copy"><i data-icon="copy"></i>Copier le texte</button>
+      <button class="btn btn--ghost btn--sm" id="act-print"><i data-icon="download"></i>PDF / Imprimer</button>
+    </div>
+  </header>
+
+  <main class="fiche" id="fiche">
+    <!-- Chargement -->
+    <div class="fstate" id="f-loading">
+      <div class="fspin"><span></span><span></span><span></span></div>
+      <p>Chargement de la candidature…</p>
+    </div>
+    <!-- Erreur -->
+    <div class="fstate" id="f-error" hidden>
+      <span class="fstate__ico"><i data-icon="alert"></i></span>
+      <h1>Fiche indisponible</h1>
+      <p id="f-error-msg">Ce lien est invalide ou la candidature n'existe plus.</p>
+      <a href="/" class="btn btn--ghost"><i data-icon="home"></i>Retour au site</a>
+    </div>
+    <!-- Contenu -->
+    <article id="f-content" hidden></article>
+  </main>
+
+  <script type="module" src="js/fiche.js"></script>
+</body>
+</html>
