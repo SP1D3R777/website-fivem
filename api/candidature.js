@@ -3,10 +3,9 @@
    POST /api/candidature  (JSON)
 
    1. Valide et nettoie les réponses.
-   2. Enregistre la candidature dans Vercel Blob (si BLOB_READ_WRITE_TOKEN
-      est configuré) → fiche consultable sur /fiche?id=…
-   3. Envoie UN embed propre dans le salon Discord avec le lien de la fiche.
-      Sans Blob : l'embed est accompagné du fichier .txt complet.
+   2. Envoie UN embed propre dans le salon Discord ; les réponses complètes
+      sont jointes au message (fichier .dat) : c'est le « stockage ».
+   3. Ajoute à l'embed le lien signé vers la fiche HTML /fiche?id=…
 
    Sécurité : connexion Discord obligatoire, requête depuis notre site
    uniquement, formulaire refusé s'il est rempli en moins de 30 s,
@@ -15,11 +14,11 @@
    Variables d'environnement (Vercel → Settings → Environment Variables) :
    - DISCORD_WEBHOOK_URL   (obligatoire)
    - DISCORD_CLIENT_ID / DISCORD_CLIENT_SECRET (connexion Discord, obligatoire)
-   - BLOB_READ_WRITE_TOKEN (ajoutée automatiquement en créant un store Blob)
+   - BLOB_READ_WRITE_TOKEN (facultatif : limite 1 candidature / 24 h / compte)
    - SITE_URL              (facultatif, ex : https://waveside.fr)
    ========================================================================== */
 const crypto = require("crypto");
-const { verify, currentUser, originOk } = require("../lib/session");
+const { verify, currentUser, originOk, ficheRef } = require("../lib/session");
 
 const LIMITS = {
   identite: [3, 80], age: [1, 2], source: [1, 20],
@@ -53,21 +52,14 @@ async function lastApplication(uid) {
   } catch { return 0; }
 }
 
-async function saveToBlob(record) {
-  if (!hasBlob()) return null;
+async function markUser(uid, ref) {
+  if (!hasBlob()) return;
   try {
     const { put } = require("@vercel/blob");
-    await put(`candidatures/${record.id}.json`, JSON.stringify(record), {
-      access: "public", contentType: "application/json", addRandomSuffix: false,
-    });
-    await put(`users/${record.user.id}.json`, JSON.stringify({ last: Date.now(), id: record.id }), {
+    await put(`users/${uid}.json`, JSON.stringify({ last: Date.now(), ref }), {
       access: "public", contentType: "application/json", addRandomSuffix: false, allowOverwrite: true, cacheControlMaxAge: 60,
     });
-    return true;
-  } catch (e) {
-    console.error("Blob error", e);
-    return null;
-  }
+  } catch (e) { console.error("Blob error (limite 24 h ignorée)", e.message); }
 }
 
 module.exports = async (req, res) => {
@@ -116,16 +108,12 @@ module.exports = async (req, res) => {
   if (recent.has(ip) && now - recent.get(ip) < 120000) return res.status(429).json({ error: "Patientez 2 minutes avant un nouvel envoi." });
   recent.set(ip, now);
 
-  const id = crypto.randomBytes(12).toString("base64url"); // 16 caractères, impossible à deviner
   const date = new Date().toISOString();
-  const record = { id, date, user, discord: user.username, ...d, age };
-
-  const stored = await saveToBlob(record);
+  const record = { v: 2, date, user, discord: user.username, ...d, age };
   const site = (process.env.SITE_URL || `https://${req.headers["x-forwarded-host"] || req.headers.host}`).replace(/\/$/, "");
-  const ficheUrl = stored ? `${site}/fiche?id=${id}` : null;
 
   /* ---------- Embed unique ---------- */
-  const embed = {
+  const embed = (ficheUrl, ref) => ({
     color: RED,
     author: { name: "WaveSide Roleplay • Recrutement Staff", icon_url: LOGO },
     title: `Candidature — ${cut(user.name, 40)}`,
@@ -134,7 +122,7 @@ module.exports = async (req, res) => {
       `**${cut(oneLine(d.identite), 80)}**`,
       `> ${cut(oneLine(d.motivations), 180)}`,
       "",
-      ficheUrl ? `### [Ouvrir la fiche complète ↗](${ficheUrl})` : "Réponses complètes dans le fichier joint.",
+      ficheUrl ? `### [Ouvrir la fiche complète ↗](${ficheUrl})` : "_Création de la fiche…_",
     ].join("\n"),
     fields: [
       { name: "Compte Discord", value: `<@${user.id}>\n\`@${user.username}\``, inline: true },
@@ -142,43 +130,47 @@ module.exports = async (req, res) => {
       { name: "A rejoint via", value: d.source, inline: true },
     ],
     thumbnail: { url: user.avatar },
-    footer: { text: `Réf. ${id}` },
+    ...(ref ? { footer: { text: `Réf. ${ref}` } } : {}),
     timestamp: date,
-  };
+  });
 
-  const payload = { username: "WaveSide • Candidatures", avatar_url: LOGO, allowed_mentions: { parse: [] }, embeds: [embed] };
+  /* ---------- 1) Envoi : embed + données de la fiche en pièce jointe ----------
+     Les réponses complètes sont stockées dans le message Discord lui-même
+     (fichier .dat compact, sans aperçu) : aucune base de données requise. */
+  const fileName = `fiche-${user.username.replace(/[^a-z0-9_.-]/gi, "_").slice(0, 32)}.dat`;
+  const fd = new FormData();
+  fd.append("payload_json", JSON.stringify({
+    username: "WaveSide • Candidatures", avatar_url: LOGO, allowed_mentions: { parse: [] },
+    embeds: [embed(null)], attachments: [{ id: 0, filename: fileName, description: "Données de la fiche candidature" }],
+  }));
+  fd.append("files[0]", new Blob([JSON.stringify(record)], { type: "application/octet-stream" }), fileName);
 
-  let fetchOpts;
-  if (ficheUrl) {
-    fetchOpts = { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) };
-  } else {
-    // Repli sans stockage : fichier texte complet joint
-    const txt = [
-      `CANDIDATURE STAFF — WAVESIDE ROLEPLAY`, `Référence : ${id}`, `Date : ${date}`, ``,
-      `Compte Discord : @${user.username} (${user.name}) — ID ${user.id}`, `Identité RP : ${d.identite}`, `Âge : ${age}`, `A rejoint via : ${d.source}`, ``,
-      `— Qualités —`, d.qualites, ``, `— Défauts —`, d.defauts, ``, `— Présentation IRL —`, d.presentation, ``,
-      `— Motivations —`, d.motivations, ``, `— Pourquoi rejoindre l'équipe WaveSide ? —`, d.pourquoi_waveside, ``,
-      `— Pourquoi vous et pas un autre ? —`, d.pourquoi_vous, ``, `— Informations complémentaires —`, d.infos || "—",
-    ].join("\n");
-    const fileName = `candidature-${user.username.replace(/[^a-z0-9_.-]/gi, "_").slice(0, 32)}.txt`;
-    payload.attachments = [{ id: 0, filename: fileName }];
-    const fd = new FormData();
-    fd.append("payload_json", JSON.stringify(payload));
-    fd.append("files[0]", new Blob([txt], { type: "text/plain;charset=utf-8" }), fileName);
-    fetchOpts = { method: "POST", body: fd };
-  }
-
+  let msg;
   try {
-    const r = await fetch(hook, fetchOpts);
+    const r = await fetch(`${hook}?wait=true`, { method: "POST", body: fd });
     if (!r.ok) {
       console.error("Discord webhook error", r.status, await r.text());
       recent.delete(ip);
       return res.status(502).json({ error: "Discord a refusé l'envoi, réessayez plus tard." });
     }
-    return res.status(200).json({ ok: true });
+    msg = await r.json();
   } catch (e) {
     console.error(e);
     recent.delete(ip);
     return res.status(502).json({ error: "Impossible de joindre Discord." });
   }
+
+  /* ---------- 2) Ajout du lien signé vers la fiche HTML ---------- */
+  const ref = ficheRef(msg.id);
+  const ficheUrl = `${site}/fiche?id=${ref}`;
+  try {
+    const r = await fetch(`${hook}/messages/${msg.id}`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ embeds: [embed(ficheUrl, msg.id)], allowed_mentions: { parse: [] } }),
+    });
+    if (!r.ok) console.error("Discord edit error", r.status, await r.text());
+  } catch (e) { console.error(e); }
+
+  await markUser(user.id, msg.id);
+  return res.status(200).json({ ok: true });
 };

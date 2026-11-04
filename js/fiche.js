@@ -92,7 +92,7 @@ function render(c) {
 }
 
 const id = new URLSearchParams(location.search).get("id") || location.hash.slice(1);
-if (!/^[A-Za-z0-9_-]{16}$/.test(id || "")) fail("Ce lien de fiche est invalide.");
+if (!/^\d{17,20}\.[A-Za-z0-9_-]{22}$/.test(id || "")) fail("Ce lien de fiche est invalide.");
 else {
   fetch(`/api/fiche?id=${encodeURIComponent(id)}`, { cache: "no-store" })
     .then(async (r) => { const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error); return j; })
