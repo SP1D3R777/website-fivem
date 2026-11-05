@@ -79,5 +79,5 @@ type, recherche), export CSV, accès direct aux fiches et aux messages Discord.
 Nécessite `DISCORD_BOT_TOKEN` + `DISCORD_CHANNEL_ID` (+ `DISCORD_GUILD_ID` pour les liens).
 
 ### Boutique
-Le lien « Boutique » (barre + pied de page) pointe vers `https://waveside.tebex.io` :
+Le lien « Boutique » (barre + pied de page) pointe vers `https://boutique.waveside.fr` :
 modifiez les attributs `href` portant `data-shop` dans `index.html` si l'adresse diffère.
