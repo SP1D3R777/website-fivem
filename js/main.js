@@ -5,6 +5,7 @@
 import { RULES } from "./rules.js";
 import { icon, hydrateIcons } from "./icons.js";
 import { initCandidature } from "./candidature.js";
+import { initStatus, loadMe, showTeam, showAdmin } from "./live.js";
 
 const CONFIG = {
   ip: "play.waveside.fr",
@@ -14,7 +15,7 @@ const CONFIG = {
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
-const VIEWS = ["accueil", "reglement", "candidature", "connexion"];
+const VIEWS = ["accueil", "reglement", "candidature", "equipe", "admin", "connexion"];
 const store = {
   get(k) { try { return localStorage.getItem(k); } catch { return null; } },
   set(k, v) { try { localStorage.setItem(k, v); } catch {} },
@@ -83,7 +84,7 @@ const unlockOnce = () => Sound.unlock();
 window.addEventListener("pointerdown", unlockOnce, { passive: true });
 window.addEventListener("keydown", unlockOnce);
 
-const SOUND_SEL = ".btn, .nav__link, .icon-btn, .tree__chap, .tree__subs a, .info, .faction__link, .pager a, .socials a, .footer__ip, .footer__col a, .sres, #wiki-toc a, .brand, .choice, .consent";
+const SOUND_SEL = ".btn, .nav__link, .icon-btn, .tree__chap, .tree__subs a, .info, .faction__link, .pager a, .socials a, .footer__ip, .footer__col a, .sres, #wiki-toc a, .brand, .choice, .consent, .seg button, .arow a, .member";
 let lastHover = 0, hoverEl = null;
 document.addEventListener("pointerover", (e) => {
   if (e.pointerType && e.pointerType !== "mouse") return;
@@ -255,7 +256,7 @@ function route() {
     $$(".view").forEach((v) => (v.hidden = v.dataset.view !== view));
     document.body.dataset.view = view;
     $$(".nav__link[data-route]").forEach((a) => a.classList.toggle("is-active", a.dataset.route === view));
-    document.title = { accueil: "WaveSide Roleplay — Serveur GTA V RP", reglement: "Règlement — WaveSide Roleplay", candidature: "Candidature Staff — WaveSide Roleplay", connexion: "Connexion — WaveSide Roleplay" }[view];
+    document.title = { accueil: "WaveSide Roleplay — Serveur GTA V RP", reglement: "Règlement — WaveSide Roleplay", candidature: "Candidature Staff — WaveSide Roleplay", equipe: "L'équipe — WaveSide Roleplay", admin: "Administration — WaveSide Roleplay", connexion: "Connexion — WaveSide Roleplay" }[view];
     const rb = $("#route-bar"); rb.classList.remove("is-run"); void rb.offsetWidth; rb.classList.add("is-run");
     if (currentView !== null) Sound.whoosh();
   }
@@ -263,6 +264,8 @@ function route() {
   if (view === "reglement") Wiki.open(chap || Wiki.current || RULES[0].id, sec, !changed);
   else if (changed) window.scrollTo({ top: 0, behavior: "instant" });
   if (changed) observeReveals();
+  if (view === "equipe") showTeam();
+  if (view === "admin") showAdmin();
   scene3d?.setView(view);
 }
 window.addEventListener("hashchange", route);
@@ -543,6 +546,8 @@ $("#year").textContent = new Date().getFullYear();
    Démarrage
    ========================================================================== */
 initCandidature({ toast, Sound, store });
+initStatus();
+loadMe();
 route();
 onScroll();
 

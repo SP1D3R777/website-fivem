@@ -58,3 +58,26 @@ Portail Discord (https://discord.com/developers/applications) :
   Envoyer des messages, Intégrer des liens, Joindre des fichiers, Voir l'historique*.
 
 Ne jamais écrire de secret dans le code : le dépôt est public.
+
+## Statut en direct, Équipe, Administration, Boutique
+
+### Statut du serveur (accueil, barre d'infos, page Connexion)
+`/api/status` lit le serveur FiveM (cache 15 s). Variable : `FIVEM_ENDPOINT = http://IP:30120`.
+Avec la ressource `waveside_status` ≥ 1.2 : joueurs, file d'attente, en ligne depuis, pic du jour.
+Sans elle : joueurs uniquement (`dynamic.json`).
+
+### Page Équipe (`#equipe`)
+`/api/team` lit les membres et rôles du Discord (cache 5 min).
+- `DISCORD_GUILD_ID` : ID du serveur Discord
+- `DISCORD_TEAM_ROLES` : IDs des rôles à afficher, **du plus haut au plus bas**, séparés par `,`
+- Portail Discord → Bot → activer **Server Members Intent**.
+
+### Panneau d'administration (`#admin`)
+Réservé au staff (`DISCORD_STAFF_IDS` ou rôle staff). Lit l'historique du salon des
+candidatures via le bot : statistiques, graphique 30 jours, origines, filtres (statut, période,
+type, recherche), export CSV, accès direct aux fiches et aux messages Discord.
+Nécessite `DISCORD_BOT_TOKEN` + `DISCORD_CHANNEL_ID` (+ `DISCORD_GUILD_ID` pour les liens).
+
+### Boutique
+Le lien « Boutique » (barre + pied de page) pointe vers `https://waveside.tebex.io` :
+modifiez les attributs `href` portant `data-shop` dans `index.html` si l'adresse diffère.

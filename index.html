@@ -58,7 +58,10 @@
         <a href="#accueil" data-route="accueil" class="nav__link"><i data-icon="home"></i>Accueil</a>
         <a href="#reglement" data-route="reglement" class="nav__link"><i data-icon="book"></i>Règlement</a>
         <a href="#candidature" data-route="candidature" class="nav__link"><i data-icon="fileText"></i>Candidature</a>
+        <a href="#equipe" data-route="equipe" class="nav__link"><i data-icon="users"></i>Équipe</a>
         <a href="#connexion" data-route="connexion" class="nav__link"><i data-icon="power"></i>Connexion</a>
+        <a href="#admin" data-route="admin" class="nav__link nav__link--admin" data-staff-only hidden><i data-icon="lock"></i>Admin</a>
+        <a href="https://waveside.tebex.io" target="_blank" rel="noopener" class="nav__link nav__link--shop" data-shop><i data-icon="cart"></i>Boutique</a>
         <a href="https://discord.gg/wavesiderp" target="_blank" rel="noopener" class="nav__link nav__link--discord"><i data-icon="discord"></i>Discord</a>
       </nav>
 
@@ -78,7 +81,7 @@
       <div class="hero">
         <div class="hero__bg" aria-hidden="true"><img src="https://imgg.fr/r/uqSCOQYo.png" alt="" /></div>
         <div class="hero__inner">
-          <span class="pill reveal"><span class="pill__dot"></span>Serveur FiveM • Whitelist ouverte</span>
+          <span class="pill reveal" data-live-pill><span class="pill__dot"></span><span data-live-text>Serveur FiveM • Whitelist ouverte</span></span>
           <h1 class="hero__title reveal">
             <span class="grad">L'EXPÉRIENCE</span>
             <span class="grad">ROLEPLAY ULTIME</span>
@@ -103,10 +106,10 @@
               <span><b>play.waveside.fr</b><small>Cliquez pour copier</small></span>
               <i data-icon="copy" class="info__end"></i>
             </button>
-            <div class="info">
-              <span class="info__ico"><i data-icon="clock"></i></span>
-              <span><b>24h/24</b><small>Reboot quotidien</small></span>
-            </div>
+            <a class="info info--live" href="#statut" data-live-info>
+              <span class="info__ico"><i data-icon="signal"></i></span>
+              <span><b data-live-count>— / —</b><small data-live-sub>Statut du serveur…</small></span>
+            </a>
           </div>
         </div>
 
@@ -125,6 +128,33 @@
           <span>Économie réaliste</span><i data-icon="wave"></i><span>Gangs & Organisations</span><i data-icon="wave"></i><span>LSPD</span><i data-icon="wave"></i><span>EMS</span><i data-icon="wave"></i><span>Entreprises</span><i data-icon="wave"></i><span>Scripts exclusifs</span><i data-icon="wave"></i><span>Mappings sur-mesure</span><i data-icon="wave"></i>
         </div>
       </div>
+
+      <!-- Statut en direct -->
+      <section class="section section--tight" id="statut">
+        <div class="live reveal" data-live-card>
+          <div class="live__head">
+            <div>
+              <p class="eyebrow">En direct</p>
+              <h2 class="h2 h2--sm">Le serveur <span class="grad">en ce moment</span></h2>
+            </div>
+            <span class="live__badge" data-live-badge><i></i><span>Vérification…</span></span>
+          </div>
+          <div class="live__grid">
+            <div class="live__main">
+              <div class="live__big"><b data-live-players>—</b><span>/ <em data-live-max>—</em> joueurs</span></div>
+              <div class="live__bar"><span data-live-bar></span></div>
+              <p class="live__hint" data-live-hint>Mise à jour toutes les 30 secondes.</p>
+            </div>
+            <div class="live__stat"><span class="live__ico"><i data-icon="hourglass"></i></span><div><small>File d'attente</small><b data-live-queue>—</b></div></div>
+            <div class="live__stat"><span class="live__ico"><i data-icon="clock"></i></span><div><small>En ligne depuis</small><b data-live-uptime>—</b></div></div>
+            <div class="live__stat"><span class="live__ico"><i data-icon="chart"></i></span><div><small>Pic du jour</small><b data-live-peak>—</b></div></div>
+          </div>
+          <div class="live__actions">
+            <button class="btn btn--primary" data-connect><i data-icon="play"></i>Rejoindre le serveur</button>
+            <button class="btn btn--ghost" data-copy-ip><i data-icon="copy"></i>play.waveside.fr</button>
+          </div>
+        </div>
+      </section>
 
       <!-- Fonctionnalités : grille bento -->
       <section class="section" id="features">
@@ -416,6 +446,67 @@
       </div>
     </section>
 
+
+    <!-- ================================================= ÉQUIPE -->
+    <section class="view" data-view="equipe" hidden>
+      <div class="wiki-head">
+        <div class="wiki-head__inner wiki-head__inner--center">
+          <div>
+            <p class="eyebrow">Ceux qui font vivre la ville</p>
+            <h1 class="h1">L'équipe <span class="grad">WaveSide</span></h1>
+            <p class="section__sub">Synchronisée en direct avec les rôles du Discord.</p>
+          </div>
+        </div>
+      </div>
+      <div class="team" id="team">
+        <div class="team__state" id="team-loading"><div class="fspin"><span></span><span></span><span></span></div><p>Chargement de l'équipe…</p></div>
+      </div>
+      <div class="team-cta">
+        <div class="cta reveal">
+          <div class="cta__txt"><h2 class="h2 h2--sm">Envie de <span class="grad">nous rejoindre ?</span></h2><p>Le recrutement staff est ouvert : déposez votre candidature en quelques minutes.</p></div>
+          <div class="cta__actions"><a href="#candidature" class="btn btn--primary"><i data-icon="fileText"></i>Postuler</a></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================= ADMIN -->
+    <section class="view" data-view="admin" hidden>
+      <div class="wiki-head">
+        <div class="wiki-head__inner">
+          <div>
+            <p class="eyebrow">Espace staff</p>
+            <h1 class="h1">Panneau <span class="grad">d'administration</span></h1>
+            <p class="section__sub">Toutes les candidatures, synchronisées avec le salon Discord.</p>
+          </div>
+          <div class="adm__me" id="adm-me" hidden></div>
+        </div>
+      </div>
+      <div class="adm" id="adm">
+        <div class="team__state" id="adm-state"><div class="fspin"><span></span><span></span><span></span></div><p>Vérification de vos accès…</p></div>
+        <div id="adm-app" hidden>
+          <div class="adm__stats" id="adm-stats"></div>
+          <div class="adm__charts">
+            <div class="adm__panel"><h3><i data-icon="chart"></i>Candidatures sur 30 jours</h3><div id="adm-chart" class="adm__chart"></div></div>
+            <div class="adm__panel"><h3><i data-icon="users"></i>Comment ils nous ont connus</h3><div id="adm-sources"></div></div>
+          </div>
+          <div class="adm__toolbar">
+            <div class="wsearch adm__search"><i data-icon="search" class="wsearch__ico"></i><input type="search" id="adm-q" placeholder="Rechercher un pseudo, une identité RP…" autocomplete="off" /></div>
+            <div class="seg" id="adm-status" role="tablist">
+              <button class="is-on" data-v="all">Toutes</button><button data-v="pending">En attente</button><button data-v="accepted">Acceptées</button><button data-v="refused">Refusées</button>
+            </div>
+            <select id="adm-period" class="adm__select" aria-label="Période">
+              <option value="0">Toute la période</option><option value="1">Dernières 24 h</option><option value="7">7 derniers jours</option><option value="30">30 derniers jours</option>
+            </select>
+            <select id="adm-type" class="adm__select" aria-label="Type"><option value="">Tous les types</option></select>
+            <button class="icon-btn" id="adm-refresh" title="Actualiser"><i data-icon="refresh"></i></button>
+            <button class="btn btn--ghost btn--sm" id="adm-csv"><i data-icon="download"></i>CSV</button>
+          </div>
+          <div class="adm__count" id="adm-count"></div>
+          <div class="adm__list" id="adm-list"></div>
+        </div>
+      </div>
+    </section>
+
     <!-- ================================================= CONNEXION -->
     <section class="view" data-view="connexion" hidden>
       <div class="wiki-head">
@@ -432,7 +523,7 @@
         <div class="connect__card" data-tilt>
           <span class="logo-ring logo-ring--lg"><img class="logo-img" src="https://imgg.fr/r/rw8tuwhj.png" alt="" width="96" height="96" /></span>
           <h2>play.waveside.fr</h2>
-          <p class="muted">Serveur FiveM • Whitelist</p>
+          <p class="muted connect__status" data-live-inline>Serveur FiveM • Whitelist</p>
           <button class="btn btn--primary btn--block btn--xl" data-connect><i data-icon="play"></i>Lancer FiveM & se connecter</button>
           <div class="f8">
             <i data-icon="terminal"></i>
@@ -485,6 +576,8 @@
         <a href="#accueil">Accueil</a>
         <a href="#reglement">Règlement</a>
         <a href="#candidature">Candidature</a>
+        <a href="#equipe">Équipe</a>
+        <a href="https://waveside.tebex.io" target="_blank" rel="noopener" data-shop>Boutique</a>
         <a href="#connexion">Connexion</a>
         <a href="https://discord.gg/wavesiderp" target="_blank" rel="noopener">Discord</a>
       </div>
