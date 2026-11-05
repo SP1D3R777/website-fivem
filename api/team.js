@@ -9,6 +9,8 @@
 const { botApi } = require("../lib/discord");
 const { avatarUrl } = require("../lib/session");
 
+// L'ID de l'application est encodé (base64) au début du jeton du bot : utile pour vérifier quelle appli est utilisée
+const botIdFromToken = () => { try { return Buffer.from((process.env.DISCORD_BOT_TOKEN || "").split(".")[0], "base64").toString(); } catch { return null; } };
 const hex = (n) => (n ? `#${n.toString(16).padStart(6, "0")}` : "#ef3340");
 
 module.exports = async (req, res) => {
@@ -34,9 +36,15 @@ module.exports = async (req, res) => {
     const r = await botApi(`/guilds/${guild}/members?limit=1000&after=${after}`);
     if (!r.ok) {
       res.setHeader("Cache-Control", "no-store");
-      return res.status(502).json({ error: r.status === 403
-        ? "Le bot n'a pas accès à la liste des membres : activez « Server Members Intent » dans le portail Discord (onglet Bot)."
-        : "Impossible de lire les membres du serveur Discord." });
+      const code = r.data?.code, msg = r.data?.message || "";
+      // 50001 Missing Access = intent « Server Members » désactivé pour CE bot (ou bot absent du serveur)
+      return res.status(502).json({
+        error: r.status === 403
+          ? "Discord refuse la liste des membres. Activez « Server Members Intent » sur l'application dont le jeton est dans DISCORD_BOT_TOKEN (portail → Bot), puis réessayez dans 1 minute."
+          : r.status === 401 ? "Jeton du bot invalide (DISCORD_BOT_TOKEN)." : "Impossible de lire les membres du serveur Discord.",
+        detail: `HTTP ${r.status}${code ? ` / code ${code}` : ""}${msg ? ` : ${msg}` : ""}`,
+        botId: botIdFromToken(),
+      });
     }
     members.push(...r.data);
     if (r.data.length < 1000) break;

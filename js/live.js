@@ -98,7 +98,7 @@ export async function showTeam() {
   try {
     const r = await fetch("/api/team");
     const d = await r.json();
-    if (!r.ok) throw new Error(d.error || "Erreur");
+    if (!r.ok) throw new Error((d.error || "Erreur") + (d.detail ? ` [${d.detail}${d.botId ? ` • bot ${d.botId}` : ""}]` : ""));
     if (!d.configured) {
       box.innerHTML = STATE(`${icon("users")}<h3>Équipe bientôt affichée</h3><p>La synchronisation avec les rôles Discord n'est pas encore configurée.</p>`);
       return;
