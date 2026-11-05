@@ -61,7 +61,7 @@ export function initCandidature({ toast, Sound, store }) {
       return null;
     }
     return d.authenticated ? d : null;
-  }  }
+  }
 
   const fieldEl = (name) => form.querySelector(`[data-field="${name}"]`);
   const value = (name) => {
