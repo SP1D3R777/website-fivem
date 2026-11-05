@@ -59,6 +59,7 @@
         <a href="#reglement" data-route="reglement" class="nav__link"><i data-icon="book"></i>Règlement</a>
         <a href="#candidature" data-route="candidature" class="nav__link"><i data-icon="fileText"></i>Candidature</a>
         <a href="#equipe" data-route="equipe" class="nav__link"><i data-icon="users"></i>Équipe</a>
+        <a href="#vote" data-route="vote" class="nav__link"><i data-icon="vote"></i>Voter</a>
         <a href="#connexion" data-route="connexion" class="nav__link"><i data-icon="power"></i>Connexion</a>
         <a href="#admin" data-route="admin" class="nav__link nav__link--admin" data-staff-only hidden><i data-icon="lock"></i>Admin</a>
         <a href="https://boutique.waveside.fr" target="_blank" rel="noopener" class="nav__link nav__link--shop" data-shop><i data-icon="cart"></i>Boutique</a>
@@ -152,6 +153,7 @@
           <div class="live__actions">
             <button class="btn btn--primary" data-connect><i data-icon="play"></i>Rejoindre le serveur</button>
             <button class="btn btn--ghost" data-copy-ip><i data-icon="copy"></i>play.waveside.fr</button>
+            <a class="btn btn--ghost" href="#vote"><i data-icon="vote"></i>Voter pour le serveur</a>
           </div>
         </div>
       </section>
@@ -507,6 +509,50 @@
       </div>
     </section>
 
+
+    <!-- ================================================= VOTE -->
+    <section class="view" data-view="vote" hidden>
+      <div class="wiki-head">
+        <div class="wiki-head__inner wiki-head__inner--center">
+          <div>
+            <p class="eyebrow">Soutenez la ville</p>
+            <h1 class="h1">Votez pour <span class="grad">WaveSide</span></h1>
+            <p class="section__sub">Chaque vote nous fait monter dans le classement Top-Serveurs et attire de nouveaux joueurs.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="vote">
+        <div class="vote__card" data-tilt>
+          <div class="vote__ring" id="vote-ring">
+            <svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="52" class="vote__track"/><circle cx="60" cy="60" r="52" class="vote__arc" id="vote-arc"/></svg>
+            <div class="vote__ring-in">
+              <i data-icon="vote" class="vote__ico"></i>
+              <b id="vote-time">Prêt</b>
+              <small id="vote-sub">à voter</small>
+            </div>
+          </div>
+          <h2 id="vote-title">Votre vote est disponible</h2>
+          <p class="muted" id="vote-text">Cliquez sur le bouton : la page Top-Serveurs s'ouvre dans un nouvel onglet.</p>
+          <a class="btn btn--primary btn--xl btn--block" id="vote-btn" href="https://top-serveurs.net/gta/vote/waveside-rp-free-acces-recherche-dans-lillegal-et-legal" target="_blank" rel="noopener"><i data-icon="external"></i>Voter sur Top-Serveurs</a>
+          <button class="vote__reset" id="vote-reset" hidden>Mon vote n'a pas été pris en compte ? Réinitialiser le minuteur</button>
+        </div>
+
+        <div class="vote__side">
+          <ol class="steps">
+            <li class="step reveal"><span class="step__ico"><i data-icon="external"></i></span><div><span class="step__n">Étape 1</span><h3>Ouvrez la page de vote</h3><p>Le bouton ouvre la fiche WaveSide sur Top-Serveurs dans un nouvel onglet.</p></div></li>
+            <li class="step reveal"><span class="step__ico"><i data-icon="check"></i></span><div><span class="step__n">Étape 2</span><h3>Validez votre vote</h3><p>Indiquez votre pseudo si demandé, remplissez la vérification anti-robot puis confirmez.</p></div></li>
+            <li class="step reveal"><span class="step__ico"><i data-icon="bell"></i></span><div><span class="step__n">Étape 3</span><h3>Revenez plus tard</h3><p>Le minuteur ci-contre vous indique quand vous pourrez voter à nouveau.</p></div></li>
+          </ol>
+          <div class="vote__why">
+            <div class="vote__perk"><i data-icon="chart"></i><div><b>Meilleur classement</b><small>Plus de visibilité sur Top-Serveurs</small></div></div>
+            <div class="vote__perk"><i data-icon="users"></i><div><b>Une ville plus vivante</b><small>De nouveaux joueurs chaque semaine</small></div></div>
+            <div class="vote__perk"><i data-icon="heart"></i><div><b>Gratuit et rapide</b><small>Moins d'une minute par vote</small></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- ================================================= CONNEXION -->
     <section class="view" data-view="connexion" hidden>
       <div class="wiki-head">
@@ -577,6 +623,7 @@
         <a href="#reglement">Règlement</a>
         <a href="#candidature">Candidature</a>
         <a href="#equipe">Équipe</a>
+        <a href="#vote">Voter</a>
         <a href="https://boutique.waveside.fr" target="_blank" rel="noopener" data-shop>Boutique</a>
         <a href="#connexion">Connexion</a>
         <a href="https://discord.gg/wavesiderp" target="_blank" rel="noopener">Discord</a>

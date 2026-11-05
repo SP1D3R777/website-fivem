@@ -6,6 +6,7 @@ import { RULES } from "./rules.js";
 import { icon, hydrateIcons } from "./icons.js";
 import { initCandidature } from "./candidature.js";
 import { initStatus, loadMe, showTeam, showAdmin } from "./live.js";
+import { initVote } from "./vote.js";
 
 const CONFIG = {
   ip: "play.waveside.fr",
@@ -15,7 +16,7 @@ const CONFIG = {
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
-const VIEWS = ["accueil", "reglement", "candidature", "equipe", "admin", "connexion"];
+const VIEWS = ["accueil", "reglement", "candidature", "equipe", "vote", "admin", "connexion"];
 const store = {
   get(k) { try { return localStorage.getItem(k); } catch { return null; } },
   set(k, v) { try { localStorage.setItem(k, v); } catch {} },
@@ -256,7 +257,7 @@ function route() {
     $$(".view").forEach((v) => (v.hidden = v.dataset.view !== view));
     document.body.dataset.view = view;
     $$(".nav__link[data-route]").forEach((a) => a.classList.toggle("is-active", a.dataset.route === view));
-    document.title = { accueil: "WaveSide Roleplay — Serveur GTA V RP", reglement: "Règlement — WaveSide Roleplay", candidature: "Candidature Staff — WaveSide Roleplay", equipe: "L'équipe — WaveSide Roleplay", admin: "Administration — WaveSide Roleplay", connexion: "Connexion — WaveSide Roleplay" }[view];
+    document.title = { accueil: "WaveSide Roleplay — Serveur GTA V RP", reglement: "Règlement — WaveSide Roleplay", candidature: "Candidature Staff — WaveSide Roleplay", equipe: "L'équipe — WaveSide Roleplay", vote: "Voter pour WaveSide — Top-Serveurs", admin: "Administration — WaveSide Roleplay", connexion: "Connexion — WaveSide Roleplay" }[view];
     const rb = $("#route-bar"); rb.classList.remove("is-run"); void rb.offsetWidth; rb.classList.add("is-run");
     if (currentView !== null) Sound.whoosh();
   }
@@ -548,6 +549,7 @@ $("#year").textContent = new Date().getFullYear();
 initCandidature({ toast, Sound, store });
 initStatus();
 loadMe();
+initVote({ store, toast, Sound });
 route();
 onScroll();
 
