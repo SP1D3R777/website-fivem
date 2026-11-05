@@ -6,7 +6,7 @@
      3. liste officielle Cfx.re   → servers-frontend.fivem.net (code cfx.re/join)
    Variables :
      FIVEM_ENDPOINT = IP:30120 ou http://IP:30120   (http:// et :30120 ajoutés si absents)
-     FIVEM_CFX_CODE = code de cfx.re/join/xxxxxx    (facultatif, repli si l'IP est injoignable)
+     FIVEM_CFX_CODE = code de cfx.re/join/xxxxxx    (par défaut : jyz6ga)
    Ajoutez ?debug=1 à l'URL pour voir la raison d'un échec.
    ========================================================================== */
 const TIMEOUT = 4500;
@@ -35,7 +35,8 @@ module.exports = async (req, res) => {
   const debug = req.query?.debug === "1";
   res.setHeader("Cache-Control", debug ? "no-store" : "public, s-maxage=15, stale-while-revalidate=30");
   const ep = normalize(process.env.FIVEM_ENDPOINT);
-  const cfx = String(process.env.FIVEM_CFX_CODE || "").trim().replace(/^.*\/join\//, "");
+  const cfx = String(process.env.FIVEM_CFX_CODE || "jyz6ga").trim() // cfx.re/join/jyz6ga (public)
+   .replace(/^.*\/join\//, "");
   if (!ep && !cfx) return res.status(200).json({ configured: false, online: false });
 
   const now = Date.now(), errors = [];

@@ -2,6 +2,7 @@
    WAVESIDE — Statut en direct, page Équipe, panneau d'administration
    ========================================================================== */
 import { icon } from "./icons.js";
+import { getMe } from "./session.js";
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -80,10 +81,8 @@ export function initStatus() {
 let me = null;
 export async function loadMe() {
   if (me !== null) return me;
-  try {
-    const r = await fetch("/api/auth/me", { cache: "no-store", credentials: "same-origin" });
-    me = r.ok ? await r.json() : false;
-  } catch { me = false; }
+  const d = await getMe();
+  me = d.authenticated ? d : false;
   $$("[data-staff-only]").forEach((el) => (el.hidden = !(me && me.staff)));
   return me;
 }

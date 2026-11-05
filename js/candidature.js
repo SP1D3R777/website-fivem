@@ -5,6 +5,8 @@
    n'est jamais exposée dans le navigateur).
    ========================================================================== */
 
+import { getMe } from "./session.js";
+
 const ENDPOINT = "/api/candidature";
 const DRAFT_KEY = "ws-candidature-draft";
 
@@ -51,18 +53,15 @@ export function initCandidature({ toast, Sound, store }) {
     history.replaceState(null, "", location.pathname + location.hash);
   }
   async function loadSession() {
-    try {
-      const r = await fetch("/api/auth/me", { cache: "no-store", credentials: "same-origin" });
-      if (r.status === 503) throw Object.assign(new Error("config"), { code: "config" });
-      if (!r.ok) return null;
-      return await r.json();
-    } catch (e) {
+    const d = await getMe(true); // jeton de formulaire frais
+    if (d.configured === false || d.error) {
       const g = document.getElementById("gate-err");
-      g.textContent = e.code === "config" ? AUTH_ERRORS.config : "Service de connexion indisponible pour le moment.";
+      g.textContent = d.configured === false ? AUTH_ERRORS.config : "Service de connexion indisponible pour le moment.";
       g.hidden = false;
       return null;
     }
-  }
+    return d.authenticated ? d : null;
+  }  }
 
   const fieldEl = (name) => form.querySelector(`[data-field="${name}"]`);
   const value = (name) => {
