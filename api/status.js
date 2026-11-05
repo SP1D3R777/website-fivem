@@ -3,7 +3,7 @@
    Sources (dans l'ordre) :
      1. ressource waveside_status → http://IP:30120/waveside_status/status
      2. FiveM standard            → http://IP:30120/dynamic.json
-     3. liste officielle Cfx.re   → servers-frontend.fivem.net (code cfx.re/join)
+     3. liste officielle Cfx.re   → frontend.cfx-services.net (code cfx.re/join)
    Variables :
      FIVEM_ENDPOINT = IP:30120 ou http://IP:30120   (http:// et :30120 ajoutés si absents)
      FIVEM_CFX_CODE = code de cfx.re/join/xxxxxx    (par défaut : jyz6ga)
@@ -62,15 +62,20 @@ module.exports = async (req, res) => {
   }
 
   if (cfx) {
-    try {
-      const j = await getJson(`https://servers-frontend.fivem.net/api/servers/single/${encodeURIComponent(cfx)}`, { Accept: "application/json" });
-      const d = j.Data || {};
-      return res.status(200).json({
-        configured: true, online: true, source: "cfx",
-        players: +d.clients || 0, max: +(d.sv_maxclients || d.svMaxclients) || 0, queue: null, startedAt: null, peak: null, checkedAt: now,
-        ...(debug ? { errors } : {}),
-      });
-    } catch (e) { errors.push(`cfx.re : ${why(e)}`); }
+    // API officielle Cfx.re (nouvelle adresse puis ancienne)
+    for (const host of ["https://frontend.cfx-services.net", "https://servers-frontend.fivem.net"]) {
+      try {
+        const j = await getJson(`${host}/api/servers/single/${encodeURIComponent(cfx)}`, { Accept: "application/json" });
+        const d = j.Data || {};
+        if (d.clients == null) throw new Error("serveur absent de la liste");
+        return res.status(200).json({
+          configured: true, online: true, source: "cfx",
+          players: +d.clients || 0, max: +(d.sv_maxclients || d.svMaxclients || d.vars?.sv_maxClients) || 0,
+          queue: null, startedAt: null, peak: null, checkedAt: now,
+          ...(debug ? { errors } : {}),
+        });
+      } catch (e) { errors.push(`${new URL(host).hostname} : ${why(e)}`); }
+    }
   }
 
   return res.status(200).json({
