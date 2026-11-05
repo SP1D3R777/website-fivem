@@ -23,8 +23,8 @@ function normalize(raw) {
   } catch { return ""; }
 }
 
-async function getJson(url, headers = {}) {
-  const r = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT), headers: { "User-Agent": "WaveSide-Site", ...headers } });
+async function getJson(url, headers = {}, timeout = TIMEOUT) {
+  const r = await fetch(url, { signal: AbortSignal.timeout(timeout), headers: { "User-Agent": "WaveSide-Site", ...headers } });
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
   return r.json();
 }
@@ -40,43 +40,38 @@ module.exports = async (req, res) => {
   if (!ep && !cfx) return res.status(200).json({ configured: false, online: false });
 
   const now = Date.now(), errors = [];
+  const wrap = (name, p) => p.catch((e) => { errors.push(`${name} : ${why(e)}`); return null; });
 
-  if (ep) {
-    try {
-      const s = await getJson(`${ep}/waveside_status/status`);
-      return res.status(200).json({
-        configured: true, online: true, source: "resource",
-        players: +s.players || 0, max: +s.max || 0, queue: +s.queue || 0,
-        startedAt: s.startedAt ? s.startedAt * 1000 : null, peak: +s.peak || 0, checkedAt: now,
-      });
-    } catch (e) { errors.push(`ressource : ${why(e)}`); }
+  // Les 3 sources sont interrogées EN PARALLÈLE ; on garde la plus complète disponible
+  const [res1, res2, res3] = await Promise.all([
+    ep ? wrap("ressource", getJson(`${ep}/waveside_status/status`, {}, 2500)) : null,
+    ep ? wrap("dynamic.json", getJson(`${ep}/dynamic.json`, {}, 2500)) : null,
+    cfx ? wrap("cfx.re", (async () => {
+      for (const host of ["https://frontend.cfx-services.net", "https://servers-frontend.fivem.net"]) {
+        try {
+          const j = await getJson(`${host}/api/servers/single/${encodeURIComponent(cfx)}`, { Accept: "application/json" });
+          if (j.Data && j.Data.clients != null) return j.Data;
+        } catch {}
+      }
+      throw new Error("serveur introuvable dans la liste Cfx.re");
+    })()) : null,
+  ]);
+  const extra = debug ? { errors } : {};
 
-    try {
-      const d = await getJson(`${ep}/dynamic.json`);
-      return res.status(200).json({
-        configured: true, online: true, source: "fivem",
-        players: +d.clients || 0, max: +d.sv_maxclients || 0, queue: null, startedAt: null, peak: null, checkedAt: now,
-        ...(debug ? { errors } : {}),
-      });
-    } catch (e) { errors.push(`dynamic.json : ${why(e)}`); }
-  }
-
-  if (cfx) {
-    // API officielle Cfx.re (nouvelle adresse puis ancienne)
-    for (const host of ["https://frontend.cfx-services.net", "https://servers-frontend.fivem.net"]) {
-      try {
-        const j = await getJson(`${host}/api/servers/single/${encodeURIComponent(cfx)}`, { Accept: "application/json" });
-        const d = j.Data || {};
-        if (d.clients == null) throw new Error("serveur absent de la liste");
-        return res.status(200).json({
-          configured: true, online: true, source: "cfx",
-          players: +d.clients || 0, max: +(d.sv_maxclients || d.svMaxclients || d.vars?.sv_maxClients) || 0,
-          queue: null, startedAt: null, peak: null, checkedAt: now,
-          ...(debug ? { errors } : {}),
-        });
-      } catch (e) { errors.push(`${new URL(host).hostname} : ${why(e)}`); }
-    }
-  }
+  if (res1) return res.status(200).json({
+    configured: true, online: true, source: "resource",
+    players: +res1.players || 0, max: +res1.max || 0, queue: +res1.queue || 0,
+    startedAt: res1.startedAt ? res1.startedAt * 1000 : null, peak: +res1.peak || 0, checkedAt: now, ...extra,
+  });
+  if (res2) return res.status(200).json({
+    configured: true, online: true, source: "fivem",
+    players: +res2.clients || 0, max: +res2.sv_maxclients || 0, queue: null, startedAt: null, peak: null, checkedAt: now, ...extra,
+  });
+  if (res3) return res.status(200).json({
+    configured: true, online: true, source: "cfx",
+    players: +res3.clients || 0, max: +(res3.sv_maxclients || res3.svMaxclients || res3.vars?.sv_maxClients) || 0,
+    queue: null, startedAt: null, peak: null, checkedAt: now, ...extra,
+  });
 
   return res.status(200).json({
     configured: true, online: false, checkedAt: now,
